@@ -83,13 +83,7 @@ class PandaBulletCharacterController(object):
 
         ##### MODEL + ANIMS
         # self.char = loader.loadModel('../models/guy.bam')
-        self.char = Actor('../models/thedodger.bam',{
-                          'idle' : '../models/dodger_idle.bam',
-                          'walk' : '../models/yup_walk.bam',
-                          'jump' : '../models/yup_jump.bam',
-                          'falling' : '../models/falling_fall.bam',
-                          'land' : '../models/yup_land.bam'
-                          })
+        self.char = Actor('../models/guy.bam')
         self.char.reparentTo(self.movementParent)
 
         self.char.enable_blend

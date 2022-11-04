@@ -14,8 +14,11 @@ from panda3d.core import *
 from panda3d.bullet import *
 
 import simplepbr
+import gltf
 
 from mouseLook import MouseLook
+from gamepad import GamepadInput
+import math
 
 base.disableMouse()
 ml = MouseLook()
@@ -44,15 +47,17 @@ globalClock.setMode(globalClock.MLimited)
 globalClock.setFrameRate(120.0)
 
 from kcc import PandaBulletCharacterController
-from char import Character
 
 class Game(DirectObject):
 
     def __init__(self):
         super().__init__()
-
-        simplepbr.init()
-
+        gltf.patch_loader(loader)
+        pipeline = simplepbr.init()
+        pipeline.use_normal_maps = True
+        pipeline.use_occlusion_maps = True
+        # GamepadInput.__init__(self)
+        self.gamepad = None
     # now, x and y can be considered relative movements
 
         base.setBackgroundColor(0.1, 0.1, 0.8, 1)
@@ -113,9 +118,9 @@ class Game(DirectObject):
         # self.accept("d-up", self.recenterCamR)
 
 ########LVLbsetup
-        lvl = loader.loadModel('../models/buildingz.glb')
-        lvl.reparentTo(self.worldNP)    
-        self.make_collision_from_model(lvl, 0, 0, self.world, (lvl.get_pos()))
+        # lvl = loader.loadModel('../models/buildingz.glb')
+        # lvl.reparentTo(self.worldNP)    
+        # self.make_collision_from_model(lvl, 0, 0, self.world, (lvl.get_pos()))
          
         # _____HANDLER_____
     
@@ -158,28 +163,108 @@ class Game(DirectObject):
     def stopFly(self):
         self.character.stopFly()
     
+    # def processInput(self, dt):
+
+    #     speed = Vec3(0, 0, 0)
+    #     omega = 0.0
+        
+    #     v = 5.0
+        
+    #     if inputState.isSet('run'): v = 15.0
+
+    #     if inputState.isSet('forward'): speed.setY(v)
+    #     if inputState.isSet('reverse'): speed.setY(-v)
+    #     if inputState.isSet('left'):    speed.setX(-v)
+    #     if inputState.isSet('right'):   speed.setX(v)
+        
+    #     if inputState.isSet('flyUp'):   speed.setZ( 2.0)
+    #     if inputState.isSet('flyDown'):   speed.setZ( -2.0)
+        
+    #     if inputState.isSet('turnLeft'):  omega =  120.0
+    #     if inputState.isSet('turnRight'): omega = -120.0
+
+    #     self.character.setAngularMovement(omega)
+    #     self.character.setLinearMovement(speed, True)
     def processInput(self, dt):
 
-        speed = Vec3(0, 0, 0)
+        self.speed = Vec3(0,0,0)
         omega = 0.0
         
         v = 5.0
+        vx = .50
+        vy = .50
+        # if inputState.isSet('run'): 
+        #     v = 15.0
+        # if self.character.movementState != "attacking":
         
-        if inputState.isSet('run'): v = 15.0
+        # if self.character.isAttacking ==False and self.character.isParrying ==False:
+        # if self.character.movementState!="attacking":
+########KEYBOARD
+        # if self.character.movementState == "wallgrab":
+        #     self.wallgrabInput()
+        #     self.speed = 0
+        #     return
+        if inputState.isSet('forward'):
+            self.speed.setY(v)
+        if inputState.isSet('reverse'): 
+            self.speed.setY(-v)
+        if inputState.isSet('left'):    
+            self.speed.setX(-v)
+        if inputState.isSet('right'):   
+            self.speed.setX(v)
 
-        if inputState.isSet('forward'): speed.setY(v)
-        if inputState.isSet('reverse'): speed.setY(-v)
-        if inputState.isSet('left'):    speed.setX(-v)
-        if inputState.isSet('right'):   speed.setX(v)
-        
-        if inputState.isSet('flyUp'):   speed.setZ( 2.0)
-        if inputState.isSet('flyDown'):   speed.setZ( -2.0)
-        
-        if inputState.isSet('turnLeft'):  omega =  120.0
-        if inputState.isSet('turnRight'): omega = -120.0
+########CONTROLLER
+        if self.gamepad:
 
+            
+            self.leftjoystick =False
+            self.joystickwatch()
+            def stickEventwatcher():
+                if self.leftjoystick==False:
+                    self.stickEventTriggered=False
+                if self.stickEventTriggered==True:
+                    return
+                if self.stickEvent == True:
+                    # print('stick eve4nt already happened')
+                    return
+                if self.leftjoystick==True:
+                    print(self.leftjoystick)
+                    self.stickEvent=True
+                    self.actionStickEvent()
+                    return
+                elif self.leftjoystick == False:
+                    self.stickEvent=False
+            stickEventwatcher()
+      
+            x = self.leftX / 10
+            y = self.leftY / 10
+           
+            # print(self.left_x.value, self.left_y.value)
+            # h = math.atan2(-self.left_x.value, self.left_y.value )
+            h = math.atan2(-x, y)
+            self.angle = math.degrees(h) 
+            # vx*= round(self.left_x.value) * 24 
+            # vy*= round(self.left_y.value) * 24
+            # if self.character.wallJump ==True and self.trigger_r.value > .1:
+            #     self.character.movementState = "wallrun"
+            vx*= self.leftX * 24 
+            vy*= self.leftY * 24
+            # print(self.leftX, self.leftY)
+            if self.character.movementState == "jumping" or self.character.movementState == 'falling':
+                vx *=.2
+                vy *= .2
+
+
+            # ADD DELAy here
+            self.speed.setX(vx)
+            self.speed.setY(vy)
+        # if self.character.movementState!="attacking" and self.character.movementState  not in self.character.nonInputStates:
+        if self.character.movementState=="attacking": #or self.character.movementState   in self.character.nonInputStates:
+            self.speed = Vec3(0,0,0)
+            # self.character.setAngularMovement(omega)
+            # self.character.setLinearMovement(self.speed, True)
         self.character.setAngularMovement(omega)
-        self.character.setLinearMovement(speed, True)
+        self.character.setLinearMovement(self.speed, True)
         
     def update(self, task):
         dt = globalClock.getDt()
@@ -320,21 +405,21 @@ class Game(DirectObject):
         self.world.setDebugNode(self.debugNP.node())
 
         # Ground
-        # shape = BulletPlaneShape(Vec3(0, 0, 1.0), 0)
+        shape = BulletPlaneShape(Vec3(0, 0, 1.0), 0)
         
-        # np = self.worldNP.attachNewNode(BulletRigidBodyNode('Ground'))
-        # np.node().addShape(shape)
-        # np.setPos(0, 0, 0)
-        # np.setCollideMask(BitMask32.allOn())
+        np = self.worldNP.attachNewNode(BulletRigidBodyNode('Ground'))
+        np.node().addShape(shape)
+        np.setPos(0, 0, 0)
+        np.setCollideMask(BitMask32.allOn())
         
-        # cm = CardMaker('ground')
-        # cm.setFrame(-20, 20, -20, 20)
-        # gfx = render.attachNewNode(cm.generate())
-        # gfx.setP(-90)
-        # gfx.setZ(-0.01)
-        # gfx.setColorScale(Vec4(0.4))
+        cm = CardMaker('ground')
+        cm.setFrame(-20, 20, -20, 20)
+        gfx = render.attachNewNode(cm.generate())
+        gfx.setP(-90)
+        gfx.setZ(-0.01)
+        gfx.setColorScale(Vec4(0.4))
         
-        # self.world.attachRigidBody(np.node())
+        self.world.attachRigidBody(np.node())
         
         
         # X = 0.3
