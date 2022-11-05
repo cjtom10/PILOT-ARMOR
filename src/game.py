@@ -48,7 +48,7 @@ globalClock.setFrameRate(120.0)
 
 from kcc import PandaBulletCharacterController
 
-class Game(DirectObject):
+class Game(DirectObject, GamepadInput):
 
     def __init__(self):
         super().__init__()
@@ -56,7 +56,7 @@ class Game(DirectObject):
         pipeline = simplepbr.init()
         pipeline.use_normal_maps = True
         pipeline.use_occlusion_maps = True
-        # GamepadInput.__init__(self)
+        GamepadInput.__init__(self)
         self.gamepad = None
     # now, x and y can be considered relative movements
 
@@ -101,7 +101,7 @@ class Game(DirectObject):
 
 
         # Task
-        taskMgr.add(self.update, 'updateWorld')
+        taskMgr.add(self.update, 'mainUpdateTask')
         
         # Physics
         self.setup()
@@ -162,6 +162,10 @@ class Game(DirectObject):
     
     def stopFly(self):
         self.character.stopFly()
+    def actionX(self):
+        print('x pressed')
+    def actionY(self):
+        print('y pressed')
     
     # def processInput(self, dt):
 

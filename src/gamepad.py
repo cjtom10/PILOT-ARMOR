@@ -1,11 +1,11 @@
 from turtle import Vec2D
-from panda3d.core import InputDevice
-from panda3d.core import TextPropertiesManager
+from panda3d.core import *
 from direct.gui.OnscreenText import OnscreenText
-class GamepadInput:
+from direct.showbase import DirectObject
+class GamepadInput():
 
 
-    def __init__(self) -> None:
+    def __init__(self):
         # icons = loader.loadModel("../models/xbone-icons.egg")
         # mgr = TextPropertiesManager.getGlobalPtr()
         # for name in ["face_a", "face_b", "face_x", "face_y", "ltrigger", "rtrigger", "lstick", "rstick"]:
