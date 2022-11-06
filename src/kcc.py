@@ -104,6 +104,8 @@ class PandaBulletCharacterController(object):
             "attacking": ["groundattacking","jumping", "dodging","airdodge", "endaction"],
             "airattacking": ["airattacking", "jumping", "falling"],
             "endaction": ["falling", "jumping", "ground","dodging","airdodge"],
+            #mech states
+            "mech" : []
 
         }
         self.airstates = ["falling", "jumping","airattacking", "airdodge"]
@@ -190,7 +192,14 @@ class PandaBulletCharacterController(object):
                           'r4' : '../models/player/char_runkey4.bam',
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
+        self.mech = Actor('../models/player/mech.bam')
+        
+        #self.char switches depending on if mech or on foot
+
         self.char.reparentTo(self.movementParent)
+
+
+
 
         self.HB=[]
 #########FOR VAULTING      )
@@ -259,6 +268,8 @@ class PandaBulletCharacterController(object):
         self.smash2=False
         self.smashtask = None
         self.smashonground = False
+
+        self.mechVec = Vec3
 
         # Anims.__init__(self)
     def setCollideMask(self, *args):
@@ -404,6 +415,7 @@ class PandaBulletCharacterController(object):
             "endaction": self.endaction,
             "vaulting": self.__processJumping,
             "wallgrab": self.processWallGrab,
+            "mech": self.processMech,
             # \\"running": 
         }
         
@@ -434,6 +446,11 @@ class PandaBulletCharacterController(object):
             self.dodgetask= None
 
         self.d2wall = (self.wallray.getPos(render) - self.movementParent.getPos(render)).length()
+    def processMech(self):
+        self.setLinearMovement(self.mechVec)
+        print('mech vec',self.mechVec)
+        # self.mechVec.z = -3
+        #add floor contact, downward vec
     def __land(self, smash = False):#task
         # self.wallRun[4] = True
         if self.canWallGrab == False:

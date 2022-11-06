@@ -8,14 +8,18 @@ from fx import Fx
 
 class Player(Anims,Actions, Fx):
 
-    def __init__(self, world, worldNP, gamepad, enemies):
-        """contains kcc, anims, actions, player task"""
+    def __init__(self, world, worldNP, gamepad, enemies, state):
+        """contains kcc, anims, actions, player task. switch between on foot and in mech"""
         self.character =PandaBulletCharacterController(world, worldNP, 4, 1.5,.5, 1,) 
-        self.charM = self.character.char # the model
+        self.state = state #either on foot or mech
+        # if self.state == 'OF':
+        self.setupOF()
+        # self.charM = self.character.char # the model - need to switch between on foot and mech
         self.shader = Shader.load(Shader.SL_GLSL, "../shaders/vert.vert", "../shaders/frag.frag")
         Fx.__init__(self)
         Anims.__init__(self)
         Actions.__init__(self)
+
         
         self.enemies = enemies
         self.player = None
@@ -32,115 +36,137 @@ class Player(Anims,Actions, Fx):
         self.wallJumpEnabled = False
         self.wallruncam=False
 
-        self.pdodgecheck = NodePath(CollisionNode('pdodgecheck'))
 
         #init hitboxes
         # self.charhitbox(self.charM, self.character.HB, True,'player')
             # def charhitbox(self, self.charM, HBlist,visible,name):
         """set up hitbox for taking damage"""
         # print(self.charM.listJoints())
-        self.HB = []
-        self.head = self.charM.expose_joint(None, 'modelRoot', 'head')
-        self.chest = self.charM.expose_joint(None, 'modelRoot', 'chest')
-        rightbicep= self.charM.expose_joint(None, 'modelRoot', 'bicep.R')
-        # self.rightfoot = self.charM.expose_joint(None, 'modelRoot', 'foot.R')
-        # self.leftfoot = self.charM.expose_joint(None, 'modelRoot', 'foot.L')
-        rightforearm= self.charM.expose_joint(None, 'modelRoot', 'forarm.R')
-        rightthigh = self.charM.expose_joint(None, 'modelRoot', 'femur.R')
-        rightshin = self.charM.expose_joint(None, 'modelRoot', 'shin.R')
-        leftbicep= self.charM.expose_joint(None, 'modelRoot', 'bicep.L')
-        leftforearm= self.charM.expose_joint(None, 'modelRoot', 'forarm.L')
-        leftthigh = self.charM.expose_joint(None, 'modelRoot', 'femur.L')
-        leftshin = self.charM.expose_joint(None, 'modelRoot', 'shin.L')
 
-        # print(self.head.getPos(render))
-        headHB = CollisionSphere(0,0,0, .1)
-        chestHB= CollisionSphere(0,.2,0,.4)
-        arm =  CollisionCapsule((0,-.2,0),(0,.8,0),0.07)
-        leg =  CollisionCapsule((0,-.38,0),(0,1,0),0.1)
-        # forearm =  CollisionCapsule((0,-.2,0),(0,.8,0),0.07)
-        self.characterHitB = self.character.movementParent.attachNewNode(CollisionNode('character'))
-        self.attachblade(loader.loadModel('../models/blade.glb'))
-        # # self.blade.setH(180)
-        bladeheight = .25
-        self.blade.setZ(.1)
-        # taskMgr.add(self.character.updatechar, "updateCharacter")
-        self.charM.setZ(bladeheight)
-        # self.characterHB = []
 
-        # self.headHB = self.characterHitB.attachNewNode(CollisionNode('head'))
-        # self.headHB.reparentTo(self.characterHitB)
-        # self.headHB.node().addSolid(headHB)       
-        # self.headHB.show()
-        # self.characterHB.append(self.headHB)
-        # self.headHB.setCompass(self.head)
-        # self.headHB.setPos(self.head, 0,0,7)
-        # self.characterHitB.show()
-
-        self.headHB = self.head.attachNewNode(CollisionNode('playerhead'))
-        self.headHB.node().addSolid(headHB)
-        self.headHB.setZ(-.2)
-        # self.headHB.show()
-        self.HB.append(self.headHB)
-        # self.headHB.wrtReparentTo(self.characterHitB)
+    def setUpMech(self):
+        """clear on foot stuff, switch player to mech w mech anims + controls"""
+        self.character.char.detachNode()
+        self.charM = self.character.mech
+        self.charM.reparentTo(self.character.movementParent)
+        # self.character.gravity =-4.4 
+        self.character.movementState = 'mech'      
+    def setupOF(self):
         
+        self.charM = self.character.char
+        self.pdodgecheck = NodePath(CollisionNode('pdodgecheck'))
+        self.HitBoxOF()
+    
 
-        self.chestHB = self.chest.attachNewNode(CollisionNode('playerchest'))
-        self.chestHB.node().addSolid(chestHB)
-        self.chestHB.setY(-.2)
-        # self.chestHB.show()
-        self.HB.append(self.chestHB)
-        # self.chestHB.reparentTo(self.characterHB)
-
-        self.bicepR = rightbicep.attachNewNode(CollisionNode('playerbicepr'))
-        self.bicepR.node().addSolid(arm)
-        # self.bicepR.show()
-        self.HB.append(self.bicepR)
-
-        self.forarmR = rightforearm.attachNewNode(CollisionNode('playerforearmr'))
-        self.forarmR.node().addSolid(arm)
-        # self.forarmR.show()
-        self.HB.append(self.forarmR)
-
-        self.thighR = rightthigh.attachNewNode(CollisionNode('playerthighr'))
-        self.thighR.node().addSolid(leg)
-        # self.thighR.show()
-        self.HB.append(self.thighR)
-        
-        self.shinR = rightshin.attachNewNode(CollisionNode('playershinr'))
-        self.shinR.node().addSolid(leg)
-        # self.shinR.show()
-        self.HB.append(self.shinR)
-
-        self.bicepL = leftbicep.attachNewNode(CollisionNode('playerbicepl'))
-        self.bicepL.node().addSolid(arm)
-        # self.bicepL.show()
-        self.HB.append(self.bicepL)
-
-        self.forarmL = leftforearm.attachNewNode(CollisionNode('playerforearml'))
-        self.forarmL.node().addSolid(arm)
-        # self.forarmL.show()
-        self.HB.append(self.forarmL)
-
-        self.thighL = leftthigh.attachNewNode(CollisionNode('playerthighl'))
-        self.thighL.node().addSolid(leg)
-        # self.thighL.show()
-        self.HB.append(self.thighL)
-        
-        self.shinL = leftshin.attachNewNode(CollisionNode('playershinl'))
-        self.shinL.node().addSolid(leg)
-        # self.shinL.show()
-        self.HB.append(self.shinL)
-
-        # if HBvisible ==True:
-        #     for node in self.HB:
-        #         node.show()
-        # print('char hb', self.characterHB)
-
-        self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
+    def HitBoxOF(self, HBvisible = False):
+            self.HB = []
+            self.head = self.charM.expose_joint(None, 'modelRoot', 'head')
+            self.chest = self.charM.expose_joint(None, 'modelRoot', 'chest')
+            rightbicep= self.charM.expose_joint(None, 'modelRoot', 'bicep.R')
+            # self.rightfoot = self.charM.expose_joint(None, 'modelRoot', 'foot.R')
+            # self.leftfoot = self.charM.expose_joint(None, 'modelRoot', 'foot.L')
+            rightforearm= self.charM.expose_joint(None, 'modelRoot', 'forarm.R')
+            rightthigh = self.charM.expose_joint(None, 'modelRoot', 'femur.R')
+            rightshin = self.charM.expose_joint(None, 'modelRoot', 'shin.R')
+            leftbicep= self.charM.expose_joint(None, 'modelRoot', 'bicep.L')
+            leftforearm= self.charM.expose_joint(None, 'modelRoot', 'forarm.L')
+            leftthigh = self.charM.expose_joint(None, 'modelRoot', 'femur.L')
+            leftshin = self.charM.expose_joint(None, 'modelRoot', 'shin.L')
+    
+            # print(self.head.getPos(render))
+            headHB = CollisionSphere(0,0,0, .1)
+            chestHB= CollisionSphere(0,.2,0,.4)
+            arm =  CollisionCapsule((0,-.2,0),(0,.8,0),0.07)
+            leg =  CollisionCapsule((0,-.38,0),(0,1,0),0.1)
+            # forearm =  CollisionCapsule((0,-.2,0),(0,.8,0),0.07)
+            self.characterHitB = self.character.movementParent.attachNewNode(CollisionNode('character'))
+            self.attachblade(loader.loadModel('../models/blade.glb'))
+            # # self.blade.setH(180)
+            bladeheight = .25
+            self.blade.setZ(.1)
+            # taskMgr.add(self.character.updatechar, "updateCharacter")
+            self.charM.setZ(bladeheight)
+            # self.characterHB = []
+    
+            # self.headHB = self.characterHitB.attachNewNode(CollisionNode('head'))
+            # self.headHB.reparentTo(self.characterHitB)
+            # self.headHB.node().addSolid(headHB)       
+            # self.headHB.show()
+            # self.characterHB.append(self.headHB)
+            # self.headHB.setCompass(self.head)
+            # self.headHB.setPos(self.head, 0,0,7)
+            # self.characterHitB.show()
+    
+            self.headHB = self.head.attachNewNode(CollisionNode('playerhead'))
+            self.headHB.node().addSolid(headHB)
+            self.headHB.setZ(-.2)
+            # self.headHB.show()
+            self.HB.append(self.headHB)
+            # self.headHB.wrtReparentTo(self.characterHitB)
+            
+    
+            self.chestHB = self.chest.attachNewNode(CollisionNode('playerchest'))
+            self.chestHB.node().addSolid(chestHB)
+            self.chestHB.setY(-.2)
+            # self.chestHB.show()
+            self.HB.append(self.chestHB)
+            # self.chestHB.reparentTo(self.characterHB)
+    
+            self.bicepR = rightbicep.attachNewNode(CollisionNode('playerbicepr'))
+            self.bicepR.node().addSolid(arm)
+            # self.bicepR.show()
+            self.HB.append(self.bicepR)
+    
+            self.forarmR = rightforearm.attachNewNode(CollisionNode('playerforearmr'))
+            self.forarmR.node().addSolid(arm)
+            # self.forarmR.show()
+            self.HB.append(self.forarmR)
+    
+            self.thighR = rightthigh.attachNewNode(CollisionNode('playerthighr'))
+            self.thighR.node().addSolid(leg)
+            # self.thighR.show()
+            self.HB.append(self.thighR)
+            
+            self.shinR = rightshin.attachNewNode(CollisionNode('playershinr'))
+            self.shinR.node().addSolid(leg)
+            # self.shinR.show()
+            self.HB.append(self.shinR)
+    
+            self.bicepL = leftbicep.attachNewNode(CollisionNode('playerbicepl'))
+            self.bicepL.node().addSolid(arm)
+            # self.bicepL.show()
+            self.HB.append(self.bicepL)
+    
+            self.forarmL = leftforearm.attachNewNode(CollisionNode('playerforearml'))
+            self.forarmL.node().addSolid(arm)
+            # self.forarmL.show()
+            self.HB.append(self.forarmL)
+    
+            self.thighL = leftthigh.attachNewNode(CollisionNode('playerthighl'))
+            self.thighL.node().addSolid(leg)
+            # self.thighL.show()
+            self.HB.append(self.thighL)
+            
+            self.shinL = leftshin.attachNewNode(CollisionNode('playershinl'))
+            self.shinL.node().addSolid(leg)
+            # self.shinL.show()
+            self.HB.append(self.shinL)
+    
+            if HBvisible ==True:
+                for node in self.HB:
+                    node.show()
+            # print('char hb', self.characterHB)
+            #hb for perfect dodge
+            self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
 
     def playerTask(self):#, task):
-        self.updateAnim()
+        if self.state == 'OF':
+            self.updateAnimOF()
+            if self.character.movementState == 'falling' and self.previousState == 'ground':
+                self.character.ground2fall(5)
+        if self.state == 'mech':
+            self.updateAnimMech()
+
         if self.character.enableVaulting==True and self.leftjoystick == True:
             self.vaultUp()
         self.prevGroundState = self.groundstates
@@ -154,8 +180,7 @@ class Player(Anims,Actions, Fx):
         self.character.update() # WIP
         self.currentState = self.character.movementState
         # print('curtrent state',self.character.movementState, 'prev',self.previousState)
-        if self.character.movementState == 'falling' and self.previousState == 'ground':
-            self.character.ground2fall(5)
+        
 
 ########Character set character direction
         if self.character.movementState == "landing":

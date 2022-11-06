@@ -145,8 +145,9 @@ class Anims:
     def timer(self,  task):
         return task.cont
         # if task.time<time
-  
-    def updateAnim(self):#, task): 
+    def updateAnimMech(self):
+        return
+    def updateAnimOF(self):#, task): 
         # print(self.isIdle, self.isWalking)
         # print(self.character.vaulting)
         # print(self.current_seq) 

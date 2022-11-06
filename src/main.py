@@ -382,7 +382,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         #AIR SL;ASH ATTACK HERE
     def actionA(self):
         print('actionA')
-        self.player.doJump()
+        if self.player.state =='OF':
+            self.player.doJump()
     def actionB(self):
         print('actionb')
         self.player.evade()
@@ -419,6 +420,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     
     def stopFly(self):
         self.character.stopFly()
+    def switch2mech(self):
+        self.player.state = 'mech'
+        self.player.setUpMech()
 ######Tasks here    
     def timer(self,  task):
         return task.cont
@@ -428,13 +432,14 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         #     return task.done
 
     def processInput(self, dt):
-
+        
         self.speed = Vec3(0,0,0)
         omega = 0.0
         
         v = 5.0
         vx = .50
         vy = .50
+        vz = .5
         # if inputState.isSet('run'): 
         #     v = 15.0
         # if self.character.movementState != "attacking":
@@ -492,15 +497,23 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             #     self.character.movementState = "wallrun"
             vx*= self.left_x.value * 24 
             vy*= self.left_y.value * 24
+            vz*= (self.trigger_r.value - self.trigger_l.value) * 24
             # print(self.leftX, self.leftY)
-            if self.player.character.movementState == "jumping" or self.player.character.movementState == 'falling':
-                vx *=.2
-                vy *= .2
+            if self.player.state == 'OF':
+                if self.player.character.movementState == "jumping" or self.player.character.movementState == 'falling':
+                    vx *=.2
+                    vy *= .2
 
 
-            # ADD DELAy here
             self.speed.setX(vx)
             self.speed.setY(vy)
+            if self.player.state == 'mech':
+                self.speed.setZ(vz)
+                self.character.mechVec = self.speed
+                # print('speed', self.speed, 'mechvec', self.character.mechVec)
+                # print(self.speed)
+
+
         # if self.character.movementState!="attacking" and self.character.movementState  not in self.character.nonInputStates:
         if self.player.character.movementState=="attacking" or self.player.character.movementState   in self.player.character.nonInputStates:
             self.speed = Vec3(0,0,0)
@@ -574,6 +587,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def update(self, task):
         """Updates the character and listens for joystick-activated events"""
+        print(self.character.movementState)
         # print('attack queue', self.attackqueue, 'a/ttack queued', self.attackQueued)
         # print('jumpdir', self.character.jumpdir)
         
@@ -919,7 +933,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.character = PandaBulletCharacterController(self.world, self.worldNP, 4, 1.5,.5, 1,)
         self.enemies = []
 
-        self.player = Player(self.world, self.worldNP, self.gamepad, self.enemies)
+        self.player = Player(self.world, self.worldNP, self.gamepad, self.enemies, 'OF')
         self.character = self.player.character
         ##
         # self.parryM.reparentTo(self.worldNP)

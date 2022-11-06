@@ -7,7 +7,7 @@ class KeyboardInput:
         # self.accept('space', self.doJump)
         # self.accept('shift', self.evade)
 
-        self.accept('c', self.doCrouch)
+        self.accept('c', self.switch2mech)
         self.accept('c-up', self.stopCrouch)
 
         # self.accept('k', self.dummy.die)

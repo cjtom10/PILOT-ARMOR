@@ -285,7 +285,7 @@ class Enemy():
         #     self.attack()
 
     def processCharge(self):
-        print(self.name, 'chargingup hhnnnnnngh','hp:',self.health,'charge amt', self.chargeAMT)
+        # print(self.name, 'chargingup hhnnnnnngh','hp:',self.health,'charge amt', self.chargeAMT)
         if  (self.anim!='chargeup'):
             self.model.play('chargeup')
 
