@@ -3,8 +3,6 @@ from panda3d.core import Vec3, Quat, Point3, WindowProperties, PythonTask, NodeP
 from direct.interval.IntervalGlobal import *
 from direct.showbase.DirectObject import DirectObject
 import time
-from panda3d.core import InputDevice
-from gpadinput import GamepadInput
 
 class MouseLook(DirectObject, object):
     
@@ -13,16 +11,12 @@ class MouseLook(DirectObject, object):
     MLMPan = 2
     
     def __init__(self, targetCam = None, targetWin = None):
-        # GamepadInput.__init__(self)
         self.setTargetCamera(targetCam)
         self.setTargetWin(targetWin)
         # self.recenterMouse()
 
         self.toplimited = False
         self.bottomlimited = False
-        self.disabled = False
-        self.camX = 0
-        self.camY = 0
         # self.targetCamera.setP(90)
 
         mw = base.mouseWatcherNode
@@ -107,7 +101,6 @@ class MouseLook(DirectObject, object):
         #~ ).start()
     
     def enable(self, ownTask = True):
-        self.disabled = False
         self.prevX = self.targetWin.getPointer(0).getX()
         self.prevY = self.targetWin.getPointer(0).getY()
         if ownTask:
@@ -115,7 +108,6 @@ class MouseLook(DirectObject, object):
     
     def disable(self):
         taskMgr.remove("UpdateMouseLook")
-        self.disabled = True
     
     def setPause(self, state):
         self.pause = state
@@ -219,28 +211,21 @@ class MouseLook(DirectObject, object):
 
 
         
-        self.deltaX = (mouse.getX() - winSizeX)  * self.mouseLookSpeed[0]
-        self.deltaY = (mouse.getY() - winSizeY) * self.mouseLookSpeed[1] 
-        
-        # self.deltaX*= 
-        # self.deltaY*= self.camY
-
-        # print('x:', self.deltaX, 'y:', self.deltaY)
+        deltaX = (mouse.getX() - winSizeX)  * self.mouseLookSpeed[0]
+        deltaY = (mouse.getY() - winSizeY) * self.mouseLookSpeed[1]
 
         xabsolute = 0
-        xabsolute += self.deltaX * 10 
+        xabsolute += deltaX * 10 
         # print(xabsolute)
         
         if self.mouseLookMode == self.MLMFPP:
-            self.updateFPP(self.deltaX, self.deltaY)
-##########Adding gameepad control to this
+            self.updateFPP(deltaX, deltaY)
         elif self.mouseLookMode == self.MLMOrbit:
-            self.updateOrbit(self.deltaX, self.deltaY)
-###########        
+            self.updateOrbit(deltaX, deltaY)
         elif self.mouseLookMode == self.MLMPan:
-            self.updatePan(self.deltaX, self.deltaY)
+            self.updatePan(deltaX, deltaY)
         
-        self.updateAlternate(self.deltaX, self.deltaY)
+        self.updateAlternate(deltaX, deltaY)
         
         # self.targetWin.movePointer(0.0, winSizeX, winSizeY)
     
@@ -281,7 +266,6 @@ class MouseLook(DirectObject, object):
         node.setPos(render, absolutePosRotated)
         # self.clamp(absolutePosRotated, -.1, .1)
         node.setQuat(render, node.getQuat(render) * quat)
-
 
 
     def setTargetCamera(self, cam):
@@ -329,24 +313,12 @@ class MouseLook(DirectObject, object):
 
         if self.toplimited is True and deltaY > 0:
             deltaY = 0
-           
         if self.bottomlimited is True and deltaY < 0:
             deltaY = 0
-
-        if self.toplimited is True and self.camY > 0:
-            self.camY = 0
-           
-        if self.bottomlimited is True and self.camY < 0:
-            self.camY = 0
-########$#         
      
         self.rotateAround(self.targetCamera, self.orbitCenter, Vec3(0, 0, 1), -deltaX, render)
         self.rotateAround(self.targetCamera, self.orbitCenter, Vec3(1, 0, 0), -deltaY, self.targetCamera)
 
-        self.rotateAround(self.targetCamera, self.orbitCenter, Vec3(0, 0, 1), -self.camX, render)
-        self.rotateAround(self.targetCamera, self.orbitCenter, Vec3(1, 0, 0), -self.camY, self.targetCamera)
-        # print('x:', self.camX, 'y:', self.camY)
-        # print('x:', self.deltaX, 'y:', self.deltaY)
 
     def updatePan(self, deltaX, deltaY):
         vector = Vec3(deltaX, 0, deltaY) * 1/globalClock.getDt() * 0.01

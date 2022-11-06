@@ -162,11 +162,18 @@ class Game(DirectObject, GamepadInput):
     
     def stopFly(self):
         self.character.stopFly()
+    def actionA(self):
+        print('a pressed')
+    def actionB(self):
+        print('b pressed')
     def actionX(self):
         print('x pressed')
     def actionY(self):
         print('y pressed')
-    
+    def actionrb(self):
+        print('rb pressed')
+    def actionlb(self):
+        print('lb pressed')
     # def processInput(self, dt):
 
     #     speed = Vec3(0, 0, 0)
