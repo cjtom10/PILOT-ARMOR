@@ -1,6 +1,5 @@
 from enum import auto
 from itertools import count
-from msilib import sequence
 from typing import Sequence
 from panda3d.bullet import *  
 from panda3d.core import *      
