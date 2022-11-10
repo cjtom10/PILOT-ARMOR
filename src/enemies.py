@@ -96,10 +96,14 @@ class Enemy():
         self.HB.node().addSolid(chestHB)
         self.HB.setY(-.2)
         self.HB.show()
+    # def resetPosture(self):
+    #     self.posture = posture
     def update(self):#, task):
         # print('posture', self.posture,'attackiing?', self.isAttacking)
         # if self.active == False:
         #     return
+        if self.posture <=0:
+            self.currentBehavior = "stunned"
         if self.currentBehavior==None:
             self.randomizebehavior()
         self.anim = self.model.getCurrentAnim()
@@ -170,6 +174,7 @@ class Enemy():
 
         
     def resetPosture(self):
+        #change this to descreete values
         self.posture -=.001
         if self.posture > 1:
             self.posture = 0.999

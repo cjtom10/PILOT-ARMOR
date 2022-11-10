@@ -1,4 +1,4 @@
-from codecs import charmap_build
+# from codecs import charmap_builddef
 from typing import Collection
 from urllib.parse import ParseResultBytes
 from panda3d.bullet import *
@@ -427,7 +427,8 @@ class Events:
             enemy.currentBehavior = 'deflected' #### Either this or stun
             # if enemy.seq.isPlaying():
             #     enemy.seq.pause()
-            enemy.posture+=.3
+            # enemy.posture+=.3
+            enemy.posture -= 1
             # enemy.isAttacking =False
             #get rid of Hitboxes
             self.attached = False

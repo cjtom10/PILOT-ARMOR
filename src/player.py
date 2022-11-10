@@ -49,8 +49,18 @@ class Player(Anims,Actions, Fx):
         self.character.char.detachNode()
         self.charM = self.character.mech
         self.charM.reparentTo(self.character.movementParent)
-        # self.character.gravity =-4.4 
-        self.character.movementState = 'mech'      
+        self.character.state = 'mech'
+        self.character.gravity =-4.4 
+        self.character.stepHeight = 0
+        # self.character.movementState = 'mech'
+        self.character.startFly()      
+
+        #set up hitbox and actor stuff
+        self.mechThighR = self.charM.controlJoint(None, "modelRoot", "thigh.R")
+        self.mechThighL = self.charM.controlJoint(None, "modelRoot", "thigh.L")
+        self.mechShinL = self.charM.controlJoint(None, "modelRoot", "shin.L")
+        self.mechShinR = self.charM.controlJoint(None, "modelRoot", "shin.R")
+        
     def setupOF(self):
         
         self.charM = self.character.char

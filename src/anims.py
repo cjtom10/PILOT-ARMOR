@@ -146,6 +146,22 @@ class Anims:
         return task.cont
         # if task.time<time
     def updateAnimMech(self):
+        #Control the tilt with joystick
+        self.charM.setR(self.leftX * 10 )
+        self.charM.setP(self.leftY* -10 )
+        #bend legs 
+        # if self.leftX>0:
+        #     r
+        r = self.leftX*75
+        if self.leftX<0:
+            self.mechThighL.setP(r)
+            self.mechShinL.setH(-r)
+        if self.leftX>0:
+            self.mechThighR.setP(-r)
+            self.mechShinR.setH(r)
+            # self.mechShinR.setZ(-5)
+            # self.mechShinL.setP(-r)
+        # self.mechThighL.setP(l)
         return
     def updateAnimOF(self):#, task): 
         # print(self.isIdle, self.isWalking)

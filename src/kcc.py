@@ -91,7 +91,7 @@ class PandaBulletCharacterController(object):
                         "jumping",
                         #"dodging",
                         "airdodge",
-                        "land",],
+                        "land","flying"],
             "landing": ["ground",],
             # "dodging": ["ground", "falling", "exitdodge"],
             "dodging": ["dodging", "exitdodge"],#,"attacking"],# "jumping"],
@@ -105,6 +105,7 @@ class PandaBulletCharacterController(object):
             "airattacking": ["airattacking", "jumping", "falling"],
             "endaction": ["falling", "jumping", "ground","dodging","airdodge"],
             #mech states
+            "flying":["ground", "falling"],
             "mech" : []
 
         }
@@ -198,7 +199,8 @@ class PandaBulletCharacterController(object):
 
         self.char.reparentTo(self.movementParent)
 
-
+        ##mech or onfoot? onfoot initialized here
+        self.state = 'OF'
 
 
         self.HB=[]
@@ -270,7 +272,7 @@ class PandaBulletCharacterController(object):
         self.smashonground = False
 
         self.mechVec = Vec3
-
+        self.ascending = False
         # Anims.__init__(self)
     def setCollideMask(self, *args):
         self.__walkCapsuleNP.setCollideMask(*args)
@@ -398,7 +400,7 @@ class PandaBulletCharacterController(object):
         # print("mvtstate",self.movementState,"footcontact",self.__footContact)#,"anim:",self.char.getCurrentAnim(),"mvtstate:", self.movementState)
         # print(self.__currentPos.z)
         # print("chaar", self.char.getZ(render))
-        processStates = {
+        processStatesOF = {
             "ground": self.__processGround,
             # "Idle": self.isIdle,
             "jumping": self.__processJumping,
@@ -415,10 +417,16 @@ class PandaBulletCharacterController(object):
             "endaction": self.endaction,
             "vaulting": self.__processJumping,
             "wallgrab": self.processWallGrab,
-            "mech": self.processMech,
+            # "mech": self.processMech,
             # \\"running": 
         }
-        
+        processStatesMech = {
+              "mech": self.processMech,
+              "ground": self.__processGround,
+            #   "jumpn"
+                "flying": self.__processFlying,
+              "falling": self.__processFalling
+        }
         # print(self.movementState)
        
         if timestep is None:    
@@ -429,7 +437,11 @@ class PandaBulletCharacterController(object):
         self.__updateFootContact()
         self.__updateHeadContact()
         
-        processStates[self.movementState]()
+        if self.state =='OF':
+            processStatesOF[self.movementState]()
+        if self.state == 'mech':
+            processStatesMech[self.movementState]()
+
 
         self.__applyLinearVelocity()
         self.__preventPenetration()
@@ -1124,8 +1136,14 @@ class PandaBulletCharacterController(object):
         
         if self.__headContact and self.__capsuleTop >= self.__headContact[0].z and self.__linearVelocity.z > 0.0:
             self.__linearVelocity.z = 0.0
-    
-    
+        print('flying. footcontact:', self.__footContact)
+        if self.isOnGround and self.__footContact!=None:
+            if self.ascending == False:
+             self.__currentPos.z = self.__footContact[0].z
+        # if self.ascending == False and self.__footContact!=None:#not self.isOnGround:
+        #     self.__fall()
+            # self.stopFly()
+            # print('state flying, falliung')
     
     def __checkFutureSpace(self, globalVel):
         globalVel = globalVel * self.futureSpacePredictionDistance

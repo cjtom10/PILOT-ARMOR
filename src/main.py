@@ -490,7 +490,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             # h = math.atan2(-self.left_x.value, self.left_y.value )
             h = math.atan2(-x, y)
             self.player.angle = math.degrees(h) 
-            print(self.player.angle)
+            # print(self.player.angle)
             # vx*= round(self.left_x.value) * 24 
             # vy*= round(self.left_y.value) * 24
             # if self.character.wallJump ==True and self.trigger_r.value > .1:
@@ -498,6 +498,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             vx*= self.left_x.value * 24 
             vy*= self.left_y.value * 24
             vz*= (self.trigger_r.value - self.trigger_l.value) * 24
+            if vz>0:
+                self.character.ascending = True
+            if vz <=0:
+                self.character.ascending = False
             # print(self.leftX, self.leftY)
             if self.player.state == 'OF':
                 if self.player.character.movementState == "jumping" or self.player.character.movementState == 'falling':
@@ -510,6 +514,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             if self.player.state == 'mech':
                 self.speed.setZ(vz)
                 self.character.mechVec = self.speed
+                # print(self.trigger_r.value)
+                # if self.trigger_r.value == 0:
+                #     self.character.movementState = 'falling'
                 # print('speed', self.speed, 'mechvec', self.character.mechVec)
                 # print(self.speed)
 
@@ -587,7 +594,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def update(self, task):
         """Updates the character and listens for joystick-activated events"""
-        print(self.character.movementState)
+        # print(self.character.movementState)
         # print('attack queue', self.attackqueue, 'a/ttack queued', self.attackQueued)
         # print('jumpdir', self.character.jumpdir)
         
@@ -599,8 +606,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         
         # print(c, s)
 
-        if self.character.enableVaulting==True and self.leftjoystick == True:
-            self.vaultUp()
+        # if self.character.enableVaulting==True and self.leftjoystick == True:
+        #     self.vaultUp()
         # v = render.getRelativeVector(self.charM, (0,20,0))
         # print(v.x, v.y, 'I',self.leftX,self.leftY)
         # print(render.getRelativeVector(self.charM, (0,20,0)))
@@ -619,7 +626,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         ###Record enemyt positions for lock on
         # self.enemypos.append(self.dummy.NP.getPos())
 
-
+        # print('self.angl;e', self.player.angle)
         # print('is atacking',self.character.isAttacking,'atk queue', self.attackqueue)
         # print('jumpdir:',self.character.jumpdir, 'grindvec', self.character.grindvec)
         # print(self.character.movementParent.getH())
@@ -1018,10 +1025,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # # dummy.instanceTo(dummy2)
         self.dummy = Enemy(self.world, 
                             self.worldNP,enemyM, startpos = self.lvl.inactiveenemypos[0],
-                            posture= .01,
+                            posture= 2,
                             hbshader=self.shader,spawnpoint = self.lvl.enemyspawnpoints[0],
                             # initState='charging',
-                            initState='stunned',
+                            initState='charging',
                             name = 'dummy' )
         self.dummy2 = Enemy(self.world, self.worldNP,enemy2, startpos = self.lvl.inactiveenemypos[1],
                             posture=.01,
