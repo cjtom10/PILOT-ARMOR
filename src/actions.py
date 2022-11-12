@@ -1,4 +1,4 @@
-from codecs import charmap_build
+# from codecs import charmap_build
 from typing import Collection
 from urllib.parse import ParseResultBytes
 from panda3d.bullet import *
@@ -458,82 +458,7 @@ class Actions:
             self.character.jumpdir = self.charM.getQuat().getForward() * 10
 
             self.character.startJump(5, state='vaulting')
-        def evade(self):
-            #input
-            # print('dodgedir',self.charM.getQuat().getForward() * 20, self.character.dodgedir)
 
-            if self.blending == True:
-                    self.endBlend()
-            if self.character.dodgetask!=None:
-                print('alreadydodge')
-                return
-
-            if self.character.isAttacking==True:
-                print('cant dodge brto attacking')
-                return
-            if self.character.movementState =="attacking":#thios does not work for some reason
-                self.finish()
-                # taskMgr.remove('itimer')
-                print('atk2dodge')
-                # self.animDodge()
-                # self.character.startdodge()
-                self.doDodge()
-
-            # self.action("face_b", (-10,0,0))
-
-            self.charM.setH(self.angle)
-            # if self.character.movepoints <3 and self.character.movetimer == False:
-            #     #fix
-            #     taskMgr.add(self.character.resetmovepoints)
-
-            if self.gamepad:
-                # leftStickX = round(self.left_x.value)
-                # leftStickY = round(self.left_y.value)
-
-
-                # print('values',self.left_x.value,self.left_y.value, self.charM.getHpr())
-                # i = self.charM.getHpr( )/-180
-                # print(self.angle.normalize())
-                if self.leftX!=0 or self.leftY!=0:
-                    self.character.dodgedir = Vec3(self.leftX*20, self.leftY*20, 0)
-                else:
-                    # self.character.dodgedir = self.charM.getQuat(render).getForward() * 20
-                    self.character.dodgedir = None
-                    # print('uwwwuuwu', self.charM.getQuat(render).getForward() * 20)
-
-                    #self.charM.getRelativeVector(render, (0,20,0))
-                    # print('dodge dir', render.getRelativeVector(self.charM, (0,20,0)))
-                    # self.charM.getQuat(render).getForward() * 20
-
-                # if inputState.isSet(None):
-                #     self.character.dodgedir = Vec3(0, 50, 0)
-                # if inputState.isSet('forward'):
-                #     self.character.dodgedir = Vec3(0, 50, 0)
-                # # self.setLinearMovement(self.direction)
-                # if inputState.isSet('reverse'):
-                #     self.character.dodgedir = Vec3(0, -50, 0) 
-                # # self.setLinearMovement(self.direction)
-                # if inputState.isSet('left'):
-                #     self.character.dodgedir = (-50, 0, 0)    
-                # # self.setLinearMovement(self.direction)
-                # if inputState.isSet('right'):   
-                #     self.character.dodgedir = (50, 0, 0)
-                # # self.character.dodgedir = (0, 50, 0)
-                # if inputState.isSet('left') and inputState.isSet('forward'):
-                #     self.character.dodgedir = Vec3(-25, -25, 0) 
-
-            if self.character.movementState == 'ground': #or self.character.movementState =="attacking":
-
-                # self.character.startdodge()
-                # print('dodgedir', self.character.dodgedir)
-                self.doDodge()
-            if self.character.movementState == 'jumping' or self.character.movementState == 'falling':
-                # self.character.startairdodge()
-                self.doDodge(air=True)
-
-    
-                # return        
-##### ATACKS START HERE
         def doSlashatk(self):
             if self.atx!=None and len(self.atx) >=4:
                 print('combo limit')
@@ -752,6 +677,70 @@ class Actions:
             self.character.movementParent.setPos(enemy, 0,-1,0)
 
             #sequence= do anim, dodge/jump in direction
+
+        def evade(self):
+            #input
+            # print('dodgedir',self.charM.getQuat().getForward() * 20, self.character.dodgedir)
+
+            if self.blending == True:
+                    self.endBlend()
+            if self.character.dodgetask!=None:
+                print('alreadydodge')
+                return
+
+            if self.character.isAttacking==True:
+                print('cant dodge brto attacking')
+                return
+            if self.character.movementState =="attacking":#thios does not work for some reason
+                self.finish()
+                # taskMgr.remove('itimer')
+                print('atk2dodge')
+                # self.animDodge()
+                # self.character.startdodge()
+                self.doDodge()
+
+            # self.action("face_b", (-10,0,0))
+
+            self.charM.setH(self.angle)
+            # if self.character.movepoints <3 and self.character.movetimer == False:
+            #     #fix
+            #     taskMgr.add(self.character.resetmovepoints)
+
+            if self.gamepad:
+                # leftStickX = round(self.left_x.value)
+                # leftStickY = round(self.left_y.value)
+
+
+                # print('values',self.left_x.value,self.left_y.value, self.charM.getHpr())
+                # i = self.charM.getHpr( )/-180
+                # print(self.angle.normalize())
+                if self.leftX!=0 or self.leftY!=0:
+                    self.character.dodgedir = Vec3(self.leftX*20, self.leftY*20, 0)
+                else:
+                    # self.character.dodgedir = self.charM.getQuat(render).getForward() * 20
+                    self.character.dodgedir = None
+                    # print('uwwwuuwu', self.charM.getQuat(render).getForward() * 20)
+
+            if self.character.movementState == 'ground': #or self.character.movementState =="attacking":
+
+                # self.character.startdodge()
+                # print('dodgedir', self.character.dodgedir)
+                self.doDodge()
+            if self.character.movementState == 'jumping' or self.character.movementState == 'falling':
+                # self.character.startairdodge()
+                self.doDodge(air=True)
+
+    
+                # return        
+##### ATACKS START HERE
+        def mechevade(self):
+            """no anim- pose curent anim and put in dodgestate for .5 sec"""
+            
+            # print('dodgevec', self.character.mechVec)
+            if self.gamepad:
+                self.character.dodgedir = self.character.mechVec
+            self.character.movementState = 'dodging'
+            
         def doDodge(self, air=False):
             if air==False:
                 self.animDodge()
@@ -759,8 +748,21 @@ class Actions:
                 print('aor ddge')
                 if self.character.movepoints!=0:
                     self.character.movepoints -=1
+        # def mechdodge(self):
+        #     """no anim- pose curent anim and put in dodgestate for .5 sec"""
+        #     self.character.movementState = 'dodging'
+        
 
-        def takeDamage(self):
+        #     #if you dont have super armor,  end attack and staggert    # print('dodge')
+        def takeHit(self):
             """event when player takes damage and doesnt have super armor"""
-            return
-            #if you dont have super armor,  end attack and staggert    # print('dodge')
+            print('takehit')
+            if self.animseq!=None:
+                self.finish()
+            s1 = self.charM.actorInterval('takehit',loop = 0)
+            #, startFrame=0, endFrame = 15)
+            def stun():
+                self.isStunned ^= True
+            stun = Func(stun)
+            self.stunseq = Sequence(Parallel(s1, stun), stun)
+            self.stunseq.start()

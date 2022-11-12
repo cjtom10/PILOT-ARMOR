@@ -142,11 +142,16 @@ class Anims:
         self.blade.reparentTo(self.leftfoot)  
         copy =self.rightfoot.attachNewNode('copy')
         self.blade.instanceTo(copy)
+        
     def timer(self,  task):
         return task.cont
         # if task.time<time
     def updateAnimMech(self):
         #Control the tilt with joystick
+        if self.character.movementState == 'dodging':
+            self.dodgetrailfx()
+            # print(self.dodgetimer)
+            return
         self.charM.setR(self.leftX * 10 )
         self.charM.setP(self.leftY* -10 )
         #bend legs 
@@ -244,11 +249,7 @@ class Anims:
         if self.character.movementState == 'grinding':
             self.animGrind()
 
-        # if self.character.movementState == "dodging":
-        #     self.dodgetrailfx()        #     # if self.blending == True:
-        #     #     self.endBlend()
 
-        #     self.animDodge()
 
         if self.character.movementState == "airdodge":
             if self.blending == True:
@@ -619,40 +620,50 @@ class Anims:
             #     self.charM.stop()
         
     # def cleanupdodge(self):
+    
     def dodgetrailfx(self):
-            # print('trail'
-            # )
-            if self.dodgetimer==None:
-                self.dodgetimer = taskMgr.add(self.timer,'dodgetimer')
-            print('dodgbeframe', round(self.dodgetimer.time) * 10)
-            self.dodgetrailefect = True
-            for o in range(self.dodgeframes):
-                def dodtrail(i):
-                    #move model, then hide  
+        if self.dodgetimer==None:
+            self.dodgetimer = taskMgr.add(self.timer,'dodgetimer')
+        # print('dodgbeframe', round(self.dodgetimer.time) * 10)
+        if self.character.state == 'mech':
+            print('mech Strail')
+            # print('mech dodgetime:', self.dodgetimer.time)
+            if self.dodgetimer.time>.5:
+                taskMgr.remove('dodgetimer')
+                self.dodgetimer = None
+                self.finish()
+            return        
+        def dodtrail(i):
+            #move models to dodge positions, then hide  
 
-                    self.dodgetrail[i].setPos(self.character.movementParent.getPos(render))
-                    self.dodgetrail[i].setH(self.charM.getH(render))
-                    self.dodgetrail[i].reparentTo(render)
-                    if self.dodgetrail[i].isHidden():
-                        self.dodgetrail[i].show()
-                def cleartrail(i):
-                    self.dodgetrail[i].hide()
-                    self.dodgetimer=None
-                # if self.dodgetrail[i] == None:
-                #     self.dodgetrail.append(render.attachNewNode(f"dtrail{i}"))
-                #     self.dodgeposeground.instanceTo(self.dodgetrail[i])
-                if self.frame !=None:
-                    # print('uwu')
-                    if self.frame > 5 and o == self.frame:
-                        se = Sequence()
-                        start = Func(dodtrail, o)
-                        end = Func(cleartrail, o)
-                        # dodtrail()
-                        # cleartrail()
-                        se.append(start)
-                        se.append( Wait(.2))
-                        se.append(end)
-                        se.start() 
+            self.dodgetrail[i].setPos(self.character.movementParent.getPos(render))
+            self.dodgetrail[i].setH(self.charM.getH(render))
+            self.dodgetrail[i].reparentTo(render)
+            if self.dodgetrail[i].isHidden():
+                self.dodgetrail[i].show()
+        def cleartrail(i):
+            self.dodgetrail[i].hide()
+            taskMgr.remove('dodgetimer')
+            self.dodgetimer=None
+
+        self.dodgetrailefect = True
+        for o in range(self.dodgeframes):
+
+            # if self.dodgetrail[i] == None:
+            #     self.dodgetrail.append(render.attachNewNode(f"dtrail{i}"))
+            #     self.dodgeposeground.instanceTo(self.dodgetrail[i])
+            if self.frame !=None:
+                # print('uwu')
+                if self.frame > 5 and o == self.frame:
+                    se = Sequence()
+                    start = Func(dodtrail, o)
+                    end = Func(cleartrail, o)
+                    # dodtrail()
+                    # cleartrail()
+                    se.append(start)
+                    se.append( Wait(.2))
+                    se.append(end)
+                    se.start() 
 
     def animLand(self):
         self.charM.setBlend(animBlend = False)
@@ -788,6 +799,9 @@ class Anims:
         self.character.isAttacking = False
     def parryFalse(self):
         self.character.isParrying = False
+        if self.leftjoystick==True: #is walking
+            self.finish()
+            # print('walk out of pary')
     def atkstage(self, buffer, pause):
         """this reads the frames of the attack anims"""
         self.buffer = buffer

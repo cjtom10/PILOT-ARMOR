@@ -152,7 +152,7 @@ class PandaBulletCharacterController(object):
         # self.char = loader.loadModel('../models/guy.bam')
         
 
-        self.health = .99
+        # self.health = .99
         self.char = Actor('../models/player/char.bam',{
                           'idle' : '../models/player/char_idle.bam',
                           'walk' : '../models/player/char_running.bam',
@@ -191,6 +191,7 @@ class PandaBulletCharacterController(object):
                           'r2' : '../models/player/char_runkey2.bam',
                           'r3' : '../models/player/char_runkey3.bam',
                           'r4' : '../models/player/char_runkey4.bam',
+                          'takehit' : '../models/player/char_takedamage1.bam',
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
         self.mech = Actor('../models/player/mech.bam')
@@ -425,7 +426,9 @@ class PandaBulletCharacterController(object):
               "ground": self.__processGround,
             #   "jumpn"
                 "flying": self.__processFlying,
-              "falling": self.__processFalling
+              "falling": self.__processFalling,
+              "dodging": self.processdodge,
+              "endaction": self.endaction,
         }
         # print(self.movementState)
        
@@ -441,7 +444,8 @@ class PandaBulletCharacterController(object):
             processStatesOF[self.movementState]()
         if self.state == 'mech':
             processStatesMech[self.movementState]()
-
+            print('mechstate',self.movementState)
+        print(self.state)
 
         self.__applyLinearVelocity()
         self.__preventPenetration()
@@ -727,20 +731,24 @@ class PandaBulletCharacterController(object):
         # self.dodgedir *= x # add x bro
         # print('dodging')
         if self.__footContact is not None:
-            self.__currentPos.z = self.__footContact[0].z
-            # self.dodgedir.z *= self.__footContact[0].z
-            # self.dodgedir*=self.__footContact[2]
-         
-        if self.dodgedir == None:
-            self.dodgedir =  self.char.getQuat().getForward() * 20  
-        # print('dodge  dir',self.dodgedir)
-        self.setLinearMovement(self.dodgedir) 
-        
-        # self.__applyLinearVelocity()
-        #Dodge dir should update based on future space
-        # self.__checkFutureSpace(self.dodgedir)
-        # if on slope- multiplyu dodge dir * slope
-        self.jumpdir = Vec3(0,0,0)
+                self.__currentPos.z = self.__footContact[0].z
+
+        if self.state == 'OF':
+            # if self.__footContact is not None:
+            #     self.__currentPos.z = self.__footContact[0].z
+
+
+            if self.dodgedir == None:
+                self.dodgedir =  self.char.getQuat().getForward() * 20  
+            # print('dodge  dir',self.dodgedir)
+            self.setLinearMovement(self.dodgedir) 
+
+            self.jumpdir = Vec3(0,0,0)
+        if self.state =='mech':
+            if self.dodgedir == None:
+                self.dodgedir =  self.mech.getQuat().getForward() * 20
+            print('dodge mech')
+            self.setLinearMovement(self.mechVec * 3) 
 
     # def exitdodge(self):
     #     # if "exitdodge" not in self.movementStateFilter[self.movementState]:
@@ -765,12 +773,14 @@ class PandaBulletCharacterController(object):
         #     self.startJump(5)
         #     self.__jump
         #     self.queueJump = False
-        
-        if not self.isOnGround() and self.__footContact==None:
-            self.__fall()
-        else:
-            self.movementState = "ground"        
-    
+        if self.state == "OF":
+            if not self.isOnGround() and self.__footContact==None:
+                self.__fall()
+            else:
+                self.movementState = "ground"        
+        if self.state == "mech":
+            self.movementState = "flying"
+
     # def startattack(self):
     #     taskMgr.add(self.attacking)
 
@@ -1136,10 +1146,12 @@ class PandaBulletCharacterController(object):
         
         if self.__headContact and self.__capsuleTop >= self.__headContact[0].z and self.__linearVelocity.z > 0.0:
             self.__linearVelocity.z = 0.0
-        print('flying. footcontact:', self.__footContact)
+        # print('flying. footcontact:', self.__footContact)
         if self.isOnGround and self.__footContact!=None:
             if self.ascending == False:
              self.__currentPos.z = self.__footContact[0].z
+       
+             self.mechVec*=2
         # if self.ascending == False and self.__footContact!=None:#not self.isOnGround:
         #     self.__fall()
             # self.stopFly()

@@ -118,6 +118,8 @@ class GamepadInput:
         if self.player.leftValue>10:
             self.player.leftValue=10
 
+        
+
         # add input timer here?
         # print(self.leftX, self.leftY)
         # print(leftStickX) 

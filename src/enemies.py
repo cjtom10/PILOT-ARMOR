@@ -101,9 +101,12 @@ class Enemy():
     def update(self):#, task):
         # print('posture', self.posture,'attackiing?', self.isAttacking)
         # if self.active == False:
-        #     return
-        if self.posture <=0:
-            self.currentBehavior = "stunned"
+        #     return\
+
+        #finisher event
+        # if self.posture <=0:
+        #     self.currentBehavior = "stunned", accept finisher
+
         if self.currentBehavior==None:
             self.randomizebehavior()
         self.anim = self.model.getCurrentAnim()

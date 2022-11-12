@@ -268,15 +268,15 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         if enemy.hasHit ==True:
             print('im alrteady hit gd')
             return
-        self.playerStun()
+        self.player.takeHit()
         enemy.atkNode.node().clearSolids()
         enemy.hasHit=True 
         print(  enemy.name, 'hits players', name)
-        self.character.health -=.10
+        self.player.health -=.10
         # print(entry)
         # self.dummy2.atkNode.node().clearSolids()
         
-        if self.character.health<=0:
+        if self.player.health<=0:
             self.doExit()
         #add hitstopping,for enemy, sfx, etc
         ####Nered to add poise check then see whether or not character gets stunned
@@ -354,7 +354,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                     return
         self.lockedOn^= True
         if self.lockedOn==True:
-            print('endlockon')
+            # print('endlockon')
             if self.lerpCam!=None:
                 self.lerpCam.pause()
             self.lerpCam = None
@@ -386,7 +386,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.player.doJump()
     def actionB(self):
         print('actionb')
-        self.player.evade()
+        if self.player.state == 'OF':
+            self.player.evade()
+        if self.player.state == 'mech':
+            self.player.mechevade()
     def actionY(self): 
         self.player.doStabatk()
         # if self.atx!=None and len(self.atx) >=4:
@@ -512,6 +515,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.speed.setX(vx)
             self.speed.setY(vy)
             if self.player.state == 'mech':
+                if self.character.movementState == "dodging":
+                    return
                 self.speed.setZ(vz)
                 self.character.mechVec = self.speed
                 # print(self.trigger_r.value)
@@ -719,7 +724,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.updateAnim()
 
         self.closestEnemy()
-        self.playerhealth.setHealth(self.character.health)
+        self.playerhealth.setHealth(self.player.health)
 
         self.targetNode.setPos(self.character.movementParent.getPos(render))
         
@@ -836,6 +841,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # if self.character.movementState == "falling"
     def updateEnemies(self, task):
         # print('acitve enemies', self.enemies)
+        # print('dummy current behavior', self.dummy.currentBehavior)
         if self.enemies:
             for enemy in self.enemies:
                 # if enemy.active ==True:   
@@ -946,7 +952,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.parryM.reparentTo(self.worldNP)
         self.charM =self.character.char
         
-        self.character.setPos(render, startpos)
+        self.player.character.setPos(render, startpos)
         base.camera.setPos(startpos)
         base.cam.setPos(initcamPos)
         base.camera.setP(render, -90)

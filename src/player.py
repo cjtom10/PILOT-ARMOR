@@ -13,6 +13,9 @@ class Player(Anims,Actions, Fx):
         self.character =PandaBulletCharacterController(world, worldNP, 4, 1.5,.5, 1,) 
         self.state = state #either on foot or mech
         # if self.state == 'OF':
+        self.health = .99
+        self.isStunned = False
+
         self.setupOF()
         # self.charM = self.character.char # the model - need to switch between on foot and mech
         self.shader = Shader.load(Shader.SL_GLSL, "../shaders/vert.vert", "../shaders/frag.frag")
@@ -170,6 +173,9 @@ class Player(Anims,Actions, Fx):
             self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
 
     def playerTask(self):#, task):
+        # print(self.isStunned)
+        if self.isStunned == True:
+            return
         if self.state == 'OF':
             self.updateAnimOF()
             if self.character.movementState == 'falling' and self.previousState == 'ground':
@@ -191,6 +197,9 @@ class Player(Anims,Actions, Fx):
         self.currentState = self.character.movementState
         # print('curtrent state',self.character.movementState, 'prev',self.previousState)
         
+        #walk out of parry
+        # if self.isWalking==True and self.character.:
+            
 
 ########Character set character direction
         if self.character.movementState == "landing":

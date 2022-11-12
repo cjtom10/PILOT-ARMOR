@@ -595,9 +595,9 @@ class Events:
             print(entry)
             print('hit!')
 
-        def playerStun(self):
-            print('stunned')
-            self.player.finish()
+        # def playerStun(self):
+        #     print('player takes hit')
+        #     self.player.finish()
             
 
         def bicepbreak(self, enemy):
