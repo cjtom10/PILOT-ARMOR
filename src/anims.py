@@ -148,10 +148,8 @@ class Anims:
         # if task.time<time
     def updateAnimMech(self):
         #Control the tilt with joystick
-        if self.character.movementState == 'dodging':
-            self.dodgetrailfx()
-            # print(self.dodgetimer)
-            return
+        self.mechanim = self.charM.getCurrentAnim()
+
         self.charM.setR(self.leftX * 10 )
         self.charM.setP(self.leftY* -10 )
         #bend legs 
@@ -166,8 +164,25 @@ class Anims:
             self.mechShinR.setH(r)
             # self.mechShinR.setZ(-5)
             # self.mechShinL.setP(-r)
-        # self.mechThighL.setP(l)
+        # # self.mechThighL.setP(l)
+        # if self.character.movementState == 'attacking':
+        #     self.charM.setBlend(animBlend = False)
+        #     return
+        if self.moving == False: #idle
+            if (self.mechanim!="idle",):
+                self.charM.loop('idle', partName='arms') 
+            # return
+        if self.character.movementState == 'dodging':
+            self.dodgetrailfx()
+        if self.character.movementState == "flying":
+
+            if (self.mechanim!="fly"):
+                self.charM.loop('fly', partName='arms') 
+                print('loop fly')
+
+            # print(self.dodgetimer)
         return
+
     def updateAnimOF(self):#, task): 
         # print(self.isIdle, self.isWalking)
         # print(self.character.vaulting)
@@ -794,7 +809,11 @@ class Anims:
             print('no queued atack')      
     def attach(self):
         if self.attached == False: #and self.hitcontact==False:
-           self.hb(parent=self.rightfoot, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
+            if self.character.state == "OF":
+                self.hb(parent=self.rightfoot, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
+            if self.character.state == "mech":
+                self.hb(parent=self.bladeL, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
+                self.hb(parent=self.bladeR, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
     def attackingFalse(self):
         self.character.isAttacking = False
     def parryFalse(self):
@@ -862,30 +881,53 @@ class Anims:
                                   Parallel(sequinp2, atkfx, sound2), name=n)
                                 #   Func(self.atkstage, False, False)))
             self.animseq.start()
-
-        if order == 1:
-            self.character.isAttacking = True
-            # slashatk('kick1', self.slash1trail, 'slash1')
-            slashatk('kick1', self.slash1trail,self.charM, 'slash1', self.preKicksfx, self.slash1sfx)
+        if self.character.state == "OF":
+            if order == 1:
+                self.character.isAttacking = True
+                # slashatk('kick1', self.slash1trail, 'slash1')
+                slashatk('kick1', self.slash1trail,self.charM, 'slash1', self.preKicksfx, self.slash1sfx)
+                
+            if order == 2:
+                self.character.isAttacking = True
+                self.detachtrail(self.slashfx)
+                slashatk('kick2', self.slash2trail,self.charM, 'slash2',self.preKicksfx, self.slash2sfx)
+    
+    
+            if order == 3:
+                self.character.isAttacking = True
+                self.detachtrail(self.slash2trail)
+                slashatk('kick3', self.slash3trail,self.charM, 'slash3',self.preKicksfx, self.slash1sfx)
             
-        if order == 2:
-            self.character.isAttacking = True
-            self.detachtrail(self.slashfx)
-            slashatk('kick2', self.slash2trail,self.charM, 'slash2',self.preKicksfx, self.slash2sfx)
- 
-   
-        if order == 3:
-            self.character.isAttacking = True
-            self.detachtrail(self.slash2trail)
-            slashatk('kick3', self.slash3trail,self.charM, 'slash3',self.preKicksfx, self.slash1sfx)
-        
- 
-        if order == 4:
- 
-            self.character.isAttacking = True
-            self.detachtrail(self.slash3trail)
-            slashatk('pausekick', self.slash3trail,self.charM,'pausekick',self.preKicksfx, self.slash1sfx,aFramestart = 15,aFrameend=30, pauseframe = 32, finalframe=35)#, pauseframe = 49, finalframe=51)
-        
+    
+            if order == 4:
+    
+                self.character.isAttacking = True
+                self.detachtrail(self.slash3trail)
+                slashatk('pausekick', self.slash3trail,self.charM,'pausekick',self.preKicksfx, self.slash1sfx,aFramestart = 15,aFrameend=30, pauseframe = 32, finalframe=35)#, pauseframe = 49, finalframe=51)
+        if self.character.state == "mech":
+            if order == 1:
+                self.character.isAttacking = True
+                # slashatk('kick1', self.slash1trail, 'slash1')
+                slashatk('slash1', self.slash1trail,self.charM, 'slash1', self.preKicksfx, self.slash1sfx)
+                
+            if order == 2:
+                self.character.isAttacking = True
+                self.detachtrail(self.slashfx)
+                slashatk('slash2', self.slash2trail,self.charM, 'slash2',self.preKicksfx, self.slash2sfx)
+    
+    
+            if order == 3:
+                self.character.isAttacking = True
+                self.detachtrail(self.slash2trail)
+                slashatk('slash3', self.slash3trail,self.charM, 'slash3',self.preKicksfx, self.slash1sfx)
+            
+    
+            # if order == 4:
+    
+            #     self.character.isAttacking = True
+            #     self.detachtrail(self.slash3trail)
+            #     slashatk('pausekick', self.slash3trail,self.charM,'pausekick',self.preKicksfx, self.slash1sfx,aFramestart = 15,aFrameend=30, pauseframe = 32, finalframe=35)#, pauseframe = 49, finalframe=51)
+            
     def animattackstab(self, order):
         
         # def stabatk(anim,fx,fxtarget, n,activeframes=8, pauseframe=15, finalframe =20):

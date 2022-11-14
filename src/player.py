@@ -15,6 +15,7 @@ class Player(Anims,Actions, Fx):
         # if self.state == 'OF':
         self.health = .99
         self.isStunned = False
+        self.plotArmour = 1 # 1 for testing
 
         self.setupOF()
         # self.charM = self.character.char # the model - need to switch between on foot and mech
@@ -45,12 +46,18 @@ class Player(Anims,Actions, Fx):
             # def charhitbox(self, self.charM, HBlist,visible,name):
         """set up hitbox for taking damage"""
         # print(self.charM.listJoints())
+    def updatePlotarmor(x):
+        #need to add this to hud
+        self.plotArmour += x
 
-
+        if self.plotarmour >= 100:
+            self.plotPoints +=1
+            self.plotarmour = 0
     def setUpMech(self):
         """clear on foot stuff, switch player to mech w mech anims + controls"""
         self.character.char.detachNode()
         self.charM = self.character.mech
+        self.character.startCrouch()
         self.charM.reparentTo(self.character.movementParent)
         self.character.state = 'mech'
         self.character.gravity =-4.4 
@@ -63,7 +70,21 @@ class Player(Anims,Actions, Fx):
         self.mechThighL = self.charM.controlJoint(None, "modelRoot", "thigh.L")
         self.mechShinL = self.charM.controlJoint(None, "modelRoot", "shin.L")
         self.mechShinR = self.charM.controlJoint(None, "modelRoot", "shin.R")
+
+        self.charM.makeSubpart("legs", ["thigh.L", "thigh.R", " shin.L", "shin.R","heelik.L", "heelik.R",
+                                        "kneeik.L", "kneeik.R" ])
+        self.charM.makeSubpart("arms", ["blade.L", "blade.R",
+                                        "forearm.L", "forearm.R", "bicep.L", 
+                                        "bicep.R",
+                                        "elbowIK.L", "elbowik.R", "handik.L", "handIK.R"
+                                        ], ["thigh.L", "thigh.R", " shin.L", "shin.R","heelik.L", "heelik.R",
+                                        "kneeik.L", "kneeik.R" ])
         
+        self.bladeL = self.charM.expose_joint(None, 'modelRoot', 'blade.L')
+        self.bladeR = self.charM.expose_joint(None, 'modelRoot', 'blade.R')
+
+        self.moving = False
+        self.mechanim = None
     def setupOF(self):
         
         self.charM = self.character.char
@@ -181,6 +202,8 @@ class Player(Anims,Actions, Fx):
             if self.character.movementState == 'falling' and self.previousState == 'ground':
                 self.character.ground2fall(5)
         if self.state == 'mech':
+            if self.leftjoystick ==True:
+                self.moving = True
             self.updateAnimMech()
 
         if self.character.enableVaulting==True and self.leftjoystick == True:

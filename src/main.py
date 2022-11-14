@@ -211,7 +211,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # if self.enemies:
         for bodypart in self.player.HB: 
             for enemy in self.enemies:
-                self.accept(f'{enemy.NP.name}attack-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy]) #FIX should oinly takle one hit at a time
+                self.accept(f'{enemy.NP.name}attack-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1]) #FIX should oinly takle one hit at a time
                 self.accept(f'{enemy.NP.name}attack-into-pdodgecheck', self.pdodge,  extraArgs=[True])
                 self.accept(f'{enemy.NP.name}attack-out-pdodgecheck', self.pdodge,  extraArgs=[False])
 
@@ -249,6 +249,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # enemy.solidsCleared = True    
 
         def twitch(p):
+            #TODO add an anim instead of this
             torso=enemy.model.controlJoint(None, "modelRoot", "torso")
             torso.setP(p)
         def end():
@@ -264,7 +265,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         if enemy.health<=0:
             self.enemydeath(enemy)
         # shrink.start()
-    def takeHit(self, name, enemy,entry):
+    def takeHit(self, name, enemy,amt, entry):
         if enemy.hasHit ==True:
             print('im alrteady hit gd')
             return
@@ -272,7 +273,16 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         enemy.atkNode.node().clearSolids()
         enemy.hasHit=True 
         print(  enemy.name, 'hits players', name)
-        self.player.health -=.10
+        netDmg = amt - self.player.plotArmour
+
+        if self.player.plotArmour > 0:
+            self.player.plotArmour -= amt
+            if amt> self.player.plotArmour:
+                self.player.health -= netDmg
+        else:
+            self.player.health -= amt        
+        print(f'player take {amt} damage', 'hp-', netDmg)
+            
         # print(entry)
         # self.dummy2.atkNode.node().clearSolids()
         
@@ -296,16 +306,21 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 #####camera
     def resetCam(self):
         # base.camera.removeNode()
+        
         initcamPos = Point3(0,-15, 5)
         base.camera.setPos(startpos)
         base.camera.setPos(initcamPos)
         
-        print('cam reset')
+        # print('cam reset onfoot')
         # base.camera.s
 
     def recenterCam(self):
-        
-        direction = self.character.char.getH()
+        if self.player.character.state == "mech":
+            # print('recenter cam not valid for mech')
+            return
+            # direction = self.character.char.getH()
+        # if self.player.character.state =="mech":
+        direction = self.character.movementParent.getH()
         targ = self.charM.getHpr(render)
         # base.camera.setHpr(self.charM, 0,0,0)
         i = LerpHprInterval(base.camera, .2,targ ).start()
@@ -836,7 +851,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.lerpCam = None
             return #task.cont
         
-    
+        # print(base.camera.getH())
         return# task.cont
         # if self.character.movementState == "falling"
     def updateEnemies(self, task):

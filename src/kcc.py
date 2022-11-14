@@ -194,7 +194,15 @@ class PandaBulletCharacterController(object):
                           'takehit' : '../models/player/char_takedamage1.bam',
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
-        self.mech = Actor('../models/player/mech.bam')
+        self.mech = Actor('../models/player/mech.bam', {
+                            'idle': '../models/player/mech_idle.bam',
+                            'deflect': '../models/player/mech_deflect.bam',
+                            'ground': '../models/player/mech_ground.bam',
+                            'fly': '../models/player/mech_flying.bam',
+                            'slash1': '../models/player/mech_slash1.bam',
+                            'slash2': '../models/player/mech_slash2.bam',
+                            'slash3': '../models/player/mech_slash3.bam',
+        })
         
         #self.char switches depending on if mech or on foot
 
@@ -331,6 +339,7 @@ class PandaBulletCharacterController(object):
         
         self.__capsuleOffset = self.__capsuleH * 0.5 + self.__levitation
         self.__footDistance = self.__capsuleOffset + self.__levitation
+
     
     def stopCrouch(self):
         """
@@ -424,6 +433,7 @@ class PandaBulletCharacterController(object):
         processStatesMech = {
               "mech": self.processMech,
               "ground": self.__processGround,
+               "attacking": self.processAttack,
             #   "jumpn"
                 "flying": self.__processFlying,
               "falling": self.__processFalling,
@@ -442,20 +452,22 @@ class PandaBulletCharacterController(object):
         
         if self.state =='OF':
             processStatesOF[self.movementState]()
+            self.wallcheck()
+
         if self.state == 'mech':
             processStatesMech[self.movementState]()
-            print('mechstate',self.movementState)
-        print(self.state)
-
+            # print('mechstate',self.movementState)
+        # print(self.state)
+         
         self.__applyLinearVelocity()
         self.__preventPenetration()
         
         self.__updateCapsule()
         
-        self.wallcheck()
+        
 
-        if self.isCrouching and not self.__enabledCrouch:
-            self.__standUp()
+        # if self.isCrouching and not self.__enabledCrouch:
+        #     self.__standUp()
     
         if self.movementState!= "dodging" or "airdodge" and self.dodgetask!=None:
             # taskMgr.remove('dodge)
@@ -748,7 +760,7 @@ class PandaBulletCharacterController(object):
             if self.dodgedir == None:
                 self.dodgedir =  self.mech.getQuat().getForward() * 20
             print('dodge mech')
-            self.setLinearMovement(self.mechVec * 3) 
+            self.setLinearMovement(self.mechVec * 3 ) 
 
     # def exitdodge(self):
     #     # if "exitdodge" not in self.movementStateFilter[self.movementState]:
@@ -801,8 +813,11 @@ class PandaBulletCharacterController(object):
         # print('attacking,', self.airAttack)
         # print(self.isOnGround())
         # self.__world.removeRigidBody(self.__walkCapsuleNP.node())
+        if self.__footContact and self.__currentPos.z - 0.1 < self.__footContact[0].z and self.__linearVelocity.z < 0.0:
+            self.__currentPos.z = self.__footContact[0].z
+            self.__linearVelocity.z = 0.0
         atkVec =Vec3(0,0,0)
-        if self.isParrying ==True and self.isAttacking==True:
+        if self.isParrying ==True and self.isAttacking==True: #no mvt for parries
             # if self.airParry==True:
             #     atkVec= -2
             # else:    
@@ -820,7 +835,11 @@ class PandaBulletCharacterController(object):
             #     # self.__fall()
             elif self.isAttacking == True: #and self.isParrying ==False:
                 # print(atkVec)
-                atkVec = self.char.getQuat().getForward() * 2
+                if self.state == "OF":
+                    atkVec = self.char.getQuat().getForward() * 2
+                if self.state == "mech":
+                    atkVec = self.__crouchCapsuleNP.getQuat().getForward() * 15
+                    # self.mech.setH(self.movementParent, 0)
                 # print('attackvec', )
             # print(atkVec)
             self.setLinearMovement(atkVec)

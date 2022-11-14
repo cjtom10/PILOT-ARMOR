@@ -516,8 +516,14 @@ class Actions:
                 if self.animseq.isPlaying():
                         self.animseq.pause()
 
-            if self.lockedOn ==False:
-                self.charM.setH(self.angle)
+            if self.character.state=='OF':
+                if self.lockedOn ==False:
+                    self.charM.setH(self.angle)
+            if self.character.state=='mech':
+                self.character.movementParent.setH(base.camera.getH())
+                # print(self.character.mech.getH(render), self.character.movementParent.getH(render))
+                
+             
             if self.atx == None:
                 self.atx = []
             if self.atx!= None:
