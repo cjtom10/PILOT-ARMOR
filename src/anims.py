@@ -68,6 +68,7 @@ class Anims:
         self.deflectFrames=None
         self.deflectinterval=None
 
+        self.mechFX = NodePath('mechfx')
 # #------------------FX here        
 #         self.dodgeframes = self.charM.getNumFrames('dodge')
 #         self.dodgeposeground = loader.loadModel('../models/dodgepose.glb')
@@ -149,7 +150,10 @@ class Anims:
     def updateAnimMech(self):
         #Control the tilt with joystick
         self.mechanim = self.charM.getCurrentAnim()
-
+        if self.character.movementState == 'dodging':
+            self.dodgetrailfx()
+            return
+#gamepad
         self.charM.setR(self.leftX * 10 )
         self.charM.setP(self.leftY* -10 )
         #bend legs 
@@ -162,25 +166,22 @@ class Anims:
         if self.leftX>0:
             self.mechThighR.setP(-r)
             self.mechShinR.setH(r)
-            # self.mechShinR.setZ(-5)
-            # self.mechShinL.setP(-r)
-        # # self.mechThighL.setP(l)
-        # if self.character.movementState == 'attacking':
-        #     self.charM.setBlend(animBlend = False)
-        #     return
+                # self.mechThighL.setP(l)
+        if self.character.movementState == 'attacking':
+            self.charM.setBlend(animBlend = False)
+            return
         if self.moving == False: #idle
             if (self.mechanim!="idle",):
                 self.charM.loop('idle', partName='arms') 
-            # return
-        if self.character.movementState == 'dodging':
-            self.dodgetrailfx()
+            return
+
         if self.character.movementState == "flying":
 
             if (self.mechanim!="fly"):
                 self.charM.loop('fly', partName='arms') 
                 print('loop fly')
 
-            # print(self.dodgetimer)
+            print(self.dodgetimer)
         return
 
     def updateAnimOF(self):#, task): 
@@ -639,9 +640,19 @@ class Anims:
     def dodgetrailfx(self):
         if self.dodgetimer==None:
             self.dodgetimer = taskMgr.add(self.timer,'dodgetimer')
-        # print('dodgbeframe', round(self.dodgetimer.time) * 10)
+
         if self.character.state == 'mech':
-            print('mech Strail')
+            # print('mech Strail')
+        
+            t=round(self.dodgetimer.time *10)
+            print('dodgbeframe', t)
+            fx = self.charM.instanceTo(self.mechFX)
+            self.mechdodgefx[1].reparentTo(render)
+            if self.FXset == False:
+                self.mechdodgefx[1].setPos(self.charM.getPos(render))
+                self.FXset = True
+            # self.charM.pose()
+            # fx.setPos(self.charM.getPos())
             # print('mech dodgetime:', self.dodgetimer.time)
             if self.dodgetimer.time>.5:
                 taskMgr.remove('dodgetimer')
@@ -660,6 +671,7 @@ class Anims:
             self.dodgetrail[i].hide()
             taskMgr.remove('dodgetimer')
             self.dodgetimer=None
+            self.FXset = False
 
         self.dodgetrailefect = True
         for o in range(self.dodgeframes):

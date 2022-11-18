@@ -87,7 +87,7 @@ from fx import Fx
 
 Dodgetime = 3
 jumpheight = 3
-startpos = (0, 0, 0)
+startpos = (0, 0, 10)
 enemystartpos  = (0, 0, 0)
 
 class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
@@ -266,6 +266,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.enemydeath(enemy)
         # shrink.start()
     def takeHit(self, name, enemy,amt, entry):
+        """amt is the amount opf damage, varies from enemy + attack"""
         if enemy.hasHit ==True:
             print('im alrteady hit gd')
             return
@@ -374,7 +375,15 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 self.lerpCam.pause()
             self.lerpCam = None
     def actionX(self):
-        self.player.doSlashatk()
+        #finisher test
+        # if self.closest!=None:
+            # self.finisher(self.closest)
+        self.finisher(self.dummy) #need to access enemy model
+            # return
+        # self.player.doSlashatk()
+
+        
+
         # if self.atx!=None and len(self.atx) >=4:
         #             print('combo limit')
         #             return
@@ -458,6 +467,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         vx = .50
         vy = .50
         vz = .5
+      
         # if inputState.isSet('run'): 
         #     v = 15.0
         # if self.character.movementState != "attacking":
@@ -785,18 +795,16 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             ml.camY = - round(self.right_y.value)
             ml.camX = round(self.right_x.value) 
             camh =base.camera.getH(self.player.charM)
-            if self.player.isWalking ==True:
-                # print(abs(self.right_x.value))
-                if abs(self.right_x.value) < .2:
-                # print(ml.camX, ml.camY,'cam h', base.camera.getH(self.charM))
-                    if 60 < camh <120: #
-                        ml.camX += .8
-                    if -120 < camh <-60: #
-                        ml.camX -= .8
-            # ml.camX = round(self.trigger_r.value-self.trigger_l.value) 
-
-            
-            # lift = trigger_r.value - trigger_l.value  
+            #straighten cam here
+            # if self.player.isWalking ==True:
+            #     # print(abs(self.right_x.value))
+            #     if abs(self.right_x.value) < .2:
+            #     # print(ml.camX, ml.camY,'cam h', base.camera.getH(self.charM))
+            #         if 60 < camh <120: #
+            #             ml.camX += .8
+            #         if -120 < camh <-60: #
+            #             ml.camX -= .8
+        
         moveCam(base.camera)  
   
         mp = self.player.character.movementParent.getPos(render)

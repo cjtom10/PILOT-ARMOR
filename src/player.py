@@ -85,6 +85,12 @@ class Player(Anims,Actions, Fx):
 
         self.moving = False
         self.mechanim = None
+
+        self.mechdodgefx = []
+        for i in range(5): #self.dodgetrail[i] == None:
+            self.mechdodgefx.append(NodePath(f"mechtrail{i}"))
+            self.character.mech.instanceTo(self.mechdodgefx[i])
+            self.FXset = False
     def setupOF(self):
         
         self.charM = self.character.char

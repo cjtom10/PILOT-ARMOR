@@ -196,12 +196,15 @@ class PandaBulletCharacterController(object):
                           })
         self.mech = Actor('../models/player/mech.bam', {
                             'idle': '../models/player/mech_idle.bam',
-                            'deflect': '../models/player/mech_deflect.bam',
+                            'parry': '../models/player/mech_deflect.bam',
                             'ground': '../models/player/mech_ground.bam',
                             'fly': '../models/player/mech_flying.bam',
                             'slash1': '../models/player/mech_slash1.bam',
                             'slash2': '../models/player/mech_slash2.bam',
                             'slash3': '../models/player/mech_slash3.bam',
+                            'stab1': '../models/player/mech_stab1.bam',
+                            'stab2': '../models/player/mech_stab2.bam',
+                            'stab3': '../models/player/mech_stab3.bam',
         })
         
         #self.char switches depending on if mech or on foot
@@ -1374,7 +1377,7 @@ class PandaBulletCharacterController(object):
         self.__crouchH = crouchH
         
         self.__walkCapsuleH, self.__walkLevitation, self.__walkCapsuleR = setData(walkH, stepH, R)
-        self.__crouchCapsuleH, self.__crouchLevitation, self.__crouchCapsuleR = setData(crouchH, stepH, R)
+        self.__crouchCapsuleH, self.__crouchLevitation, self.__crouchCapsuleR = setData(8, stepH, 3)
         
         self.__capsuleH, self.__levitation, self.__capsuleR, self.__h = self.__walkCapsuleH, self.__walkLevitation, self.__walkCapsuleR, self.__walkH
         

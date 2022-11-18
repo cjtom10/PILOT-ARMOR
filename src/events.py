@@ -628,8 +628,21 @@ class Events:
                 #play anims, move cam forward
 
         def finisher(self, enemy):
-            self.character.movementParent.setPos(enemy, 0,-1,0)
+            #
+            # 2move player to enemy pos
+            #3play both enemy/player anims
+            #4 kill enemy
+            print('finisher')
 
+            # self.character.movementParent.setPos(enemy, 0,-1,0)
+            point = render.getRelativePoint(enemy.model, (0,3,0))
+            self.character.movementState = "grinding"
+            move2enemy =Parallel(LerpPosInterval(self.character.movementParent, .5, point))#,
+                                                # LerpPosInterval(self.camtarg, .5, point),
+                                                # LerpHprInterval(self.player.charM, .5, point))
+            anim = ActorInterval
+            # en
+            s = Sequence(move2enemy).start()
             #sequence= do anim, dodge/jump in direction
         # def doDodge(self, air=False):
         #     if air==False:

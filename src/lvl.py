@@ -79,7 +79,7 @@ class Level:#makd this a separate object
 
                 plight = PointLight('plight')
                 plNP = render.attachNewNode(plight)
-                plNP.setPos(0,0,10)
+                plNP.setPos(0,0,100)
                 NP.set_light(plNP)
 
 ##end light setup
@@ -87,13 +87,12 @@ class Level:#makd this a separate object
                 
 
 
-                self.arena = loader.loadModel('../models/lvl2/arena2.glb')
+                self.arena = loader.loadModel('../models/lvl/arena.glb')
                 self.arena.reparentTo(NP)
-                #inactive enemy platform
-                # self.box(25,30,2,1,NP,self.arena.find('box1').getPos() )
-                # print(self.arena.find('box1').getPos())
-                for i in range(8):
-                        self.findTris(f'tri{i}',self.arena)
+                
+                # for i in range(8):
+                #         self.findTris(f'tri{i}',self.arena)
+                self.findTris(f'tri1',self.arena)
                         
                 self.enemyPos()
                 self.spawnNo = 0
@@ -662,12 +661,14 @@ class HealthBar(NodePath):
         self.bg.setPos(1-offset,0,0)
         
         #         self.bg.setScale(1.0 - value, 1, 1)
-    def setPosture(self, value):
+    def setPosture(self, value, posturecount = 3):
+        ## Should be divided into enemy's posture count
         # if value ==1:
         #         value =.999
         # if value ==0:
         #         value =.001
-        offset = 1.0-value
+        # offset = 1.0-value
+        offset = (posturecount - value) / posturecount
 
         self.posture1.setScale(value, 1, 1)
         self.posture2.setScale(1.0-value, 1, 1)

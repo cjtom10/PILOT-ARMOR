@@ -319,19 +319,19 @@ class Actions:
                     # if self.character.isOnGround():
                     self.blendoutAtk = [self.currentAtk[0], self.currentAtk[1]]#blendout atk to change based on atack anim
 
-        def parrytask(self, task):
-            # self.character.movementState ="attacking"
-            if self.anim =='parry':
-                if self.attached == False:
-                    self.hb(parent=self.forearm, node = self.parryNode, shape=self.atkhb)
-                return task.cont
-            else:
-                self.character.movementState = "endaction"
-                # print('enmdparry')
-                self.parryNode.node().clearSolids()
-                self.attached = False
-                self.character.isParrying = False
-                return task.done
+        # def parrytask(self, task):
+        #     # self.character.movementState ="attacking"
+        #     if self.anim =='parry':
+        #         if self.attached == False:
+        #             self.hb(parent=self.forearm, node = self.parryNode, shape=self.atkhb)
+        #         return task.cont
+        #     else:
+        #         self.character.movementState = "endaction"
+        #         # print('enmdparry')
+        #         self.parryNode.node().clearSolids()
+        #         self.attached = False
+        #         self.character.isParrying = False
+        #         return task.done
         def doDeflect(self, state='ground'):
             print('deflect order:', self.deflectOrder)
             self.deflectOrder+=1
@@ -360,8 +360,11 @@ class Actions:
             if self.character.movementState!= "attacking":
                 self.character.movementState = "attacking"            
             
-            if self.lockedOn ==False:
-                self.charM.setH(self.angle)
+            if self.character.state =="OF":
+                if self.lockedOn ==False:
+                    self.charM.setH(self.angle)
+            if self.character.state =="OF":
+                self.character.movementParent.setH(base.camera.getH())
         
             self.animDeflect()
         # def deflected(self, anim, enemy): #control enemie's recoil anim here too
@@ -586,8 +589,11 @@ class Actions:
             if self.animseq is not None:#end attack anim sequence
                 if self.animseq.isPlaying():
                         self.animseq.pause()
-            if self.lockedOn ==False:
-                self.charM.setH(self.angle)
+            if self.character.state=='OF':
+                if self.lockedOn ==False:
+                    self.charM.setH(self.angle)
+            if self.character.state=='mech':
+                self.character.movementParent.setH(base.camera.getH())
             # self.action("face_y", (-10,0,0))
             if self.atx == None:
                  self.atx = []
