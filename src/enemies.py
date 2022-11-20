@@ -62,6 +62,8 @@ class Enemy():
 
         self.inRange = False
 
+        self.finishMe = False
+
         # self.pdodgecheck = NodePath(BulletRigidBodynode(f'{self.name}pdodge'))
         # self.pdodgecheck.node().setKinematic(True)
         # self.pdodgecheck.node().addShape)
@@ -98,14 +100,25 @@ class Enemy():
         self.HB.show()
     # def resetPosture(self):
     #     self.posture = posture
+    def updateTurret(self):
+                processaction={
+                            'idle': self.idle,
+                           
+                            'melee': self.processAttack, 
+                          
+                            'stunned': self.isStunned,
+                      
+                          
+            }
+        
     def update(self):#, task):
         # print('posture', self.posture,'attackiing?', self.isAttacking)
         # if self.active == False:
         #     return\
 
-        #finisher event
-        # if self.posture <=0:
-        #     self.currentBehavior = "stunned", accept finisher
+        #finisher check
+        if self.posture<=0 and self.inRange == True:
+            self.finishMe = True
 
         if self.currentBehavior==None:
             self.randomizebehavior()

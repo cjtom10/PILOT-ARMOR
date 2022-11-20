@@ -641,6 +641,8 @@ class Events:
                                                 # LerpPosInterval(self.camtarg, .5, point),
                                                 # LerpHprInterval(self.player.charM, .5, point))
             anim = ActorInterval
+
+            die = Func(self.enemydeath, enemy)
             # en
             s = Sequence(move2enemy).start()
             #sequence= do anim, dodge/jump in direction

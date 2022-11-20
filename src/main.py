@@ -294,7 +294,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
        
 
     def deflectcontact(self,enemy, entry):
-        print(f'player defelects {enemy}')
+        print(f'player defelects {enemy.name}', 'enemyposture:',enemy.posture)
         #pause anims opn enemy/p[layer, play recoil anims]
         #deplete posture from enemy, if posture -== 0 enemy enters stun
         self.deflectsfx.play()
@@ -375,12 +375,17 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 self.lerpCam.pause()
             self.lerpCam = None
     def actionX(self):
+        for x in self.enemies:
+            if x.finishMe == True:
+                self.finisher(x)
+                return
+        # print('closest enemy: ', self.closest)
         #finisher test
         # if self.closest!=None:
             # self.finisher(self.closest)
-        self.finisher(self.dummy) #need to access enemy model
+        # self.finisher(self.dummy) #need to access enemy model
             # return
-        # self.player.doSlashatk()
+        self.player.doSlashatk()
 
         
 
@@ -851,7 +856,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
             self.lerpCam = Sequence(LerpPosInterval(self.camtarg, t, mp)).start()
             # self.lerpCam.start()
-            return #task.cont
+            return #task.contmovetarget
 
         if dis <2 and self.lerpCam != None: #and self.isIdle == True:
             
@@ -870,9 +875,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 # if enemy.active ==True:   
                     enemy.update()
             
-     #-0------for testing purposes-------
-        self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)
+     #-0------for testing purposes-------\
+     # need to mkae this update AUTomticallly
+        # self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)
         self.dummy.moveTarget = self.enemyTargets[1].getPos(render)
+        self.dummy3.moveTarget = self.enemyTargets[0].getPos(render)
+
+
         # print('dummy2 behaviour', self.dummy2.currentBehavior,self.dummy2.speed)
         # print(self.dummy2.d2p)
         # print('dummy1 behavior', self.dummy.currentBehavior)
@@ -896,6 +905,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             #     self.dummy2.tracktarget()
             # self.dummy.lookTarget = playerpos
             # print(self.p2e)
+            # print('closest eenemy', self.closest)
             if self.closest == None:
                 v = self.activeEnemiesPos.values()
                 closeval= min(v, key=lambda pt: (playerpos - pt).length())
@@ -984,7 +994,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.charlight.setAttenuation((0.1, 0.04, 0.0))
         # render.setLight(self.charlightNP)
         # self.charM.setShaderAuto()
-        self.worldNP.setAttrib(LightRampAttrib.makeSingleThreshold(0, 0.5))
+        # self.worldNP.setAttrib(LightRampAttrib.makeSingleThreshold(0, 0.5))
 
 
         # self.charhitbox(self.charM, self.character.HB, True,'player')
@@ -1016,39 +1026,45 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     def enemySetup(self): #enemy):
         """sets up enemies, defaults to inactive. spawn enemy to add them to arena"""
     # def enemySetup(self, actor, startpos, ):
-        # dummy = Actor('../models/atkdummy/atkdummy.bam',{
-        #                   'slash' : '../models/atkdummy/atkdummy_slash.bam',
-        #                   'idle' : '../models/atkdummy/atkdummy_idle.bam',
-        #                   'SMASH' : '../models/atkdummy/atkdummy_SMASH.bam',
+        # dummy = Actor('../models/enemies/enemies.bam',{
+        #                   'slash' : '../models/enemies/enemies_slash.bam',
+        #                   'idle' : '../models/enemies/enemies_idle.bam',
+        #                   'SMASH' : '../models/enemies/enemies_SMASH.bam',
         #                     })
-        enemyM = Actor('../models/atkdummy/enemy.bam',{
-                          'slash' : '../models/atkdummy/enemy_slash.bam',
-                          'slash2' : '../models/atkdummy/enemy_slash2.bam',
-                          'idle' : '../models/atkdummy/enemy_idle.002.bam',
-                          'deflected' : '../models/atkdummy/enemy_deflected.bam',
-                          'recoil1' : '../models/atkdummy/enemy_recoil1.bam',
-                          'bicepbreak' : '../models/atkdummy/enemy_bicepbreak.bam',
-                          'death' : '../models/atkdummy/enemy_death.bam',
-                          'run' : '../models/atkdummy/enemy_walk.bam',
-                          'chargeup' : '../models/atkdummy/enemy_chargeup.bam'
+        self.turret = Actor('../models/enemies/turret.bam', {
+                            'idle': '../models/enemies/turret_idle.bam',
+                            'slash1': '../models/enemies/turret_slash1.bam',
+                            'slash2': '../models/enemies/turret_slash1.bam',})
+        # self.turret.reparentTo(self.worldNP)
+        # self.turret.setPos(10,0,0)
+        enemyM = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'bicepbreak' : '../models/enemies/enemy_bicepbreak.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
+                          'chargeup' : '../models/enemies/enemy_chargeup.bam'
                             })
-        enemy2 = Actor('../models/atkdummy/enemy.bam',{
-                          'slash' : '../models/atkdummy/enemy_slash.bam',
-                          'idle' : '../models/atkdummy/enemy_idle.002.bam',
-                          'slash2' : '../models/atkdummy/enemy_slash2.bam',
-                          'deflected' : '../models/atkdummy/enemy_deflected.bam',
-                          'recoil1' : '../models/atkdummy/enemy_recoil1.bam',
-                          'death' : '../models/atkdummy/enemy_death.bam',
-                          'run' : '../models/atkdummy/enemy_walk.bam',
+        enemy2 = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
                             })
-        enemy3 = Actor('../models/atkdummy/enemy.bam',{
-                          'slash' : '../models/atkdummy/enemy_slash.bam',
-                          'slash2' : '../models/atkdummy/enemy_slash2.bam',
-                          'idle' : '../models/atkdummy/enemy_idle.002.bam',
-                          'deflected' : '../models/atkdummy/enemy_deflected.bam',
-                          'recoil1' : '../models/atkdummy/enemy_recoil1.bam',
-                          'death' : '../models/atkdummy/enemy_death.bam',
-                          'run' : '../models/atkdummy/enemy_walk.bam',
+        enemy3 = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
                             })
         # dummy2 = Actor()
         # # dummy.instanceTo(dummy2)
@@ -1060,18 +1076,18 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                             initState='charging',
                             name = 'dummy' )
         self.dummy2 = Enemy(self.world, self.worldNP,enemy2, startpos = self.lvl.inactiveenemypos[1],
-                            posture=.01,
+                            posture=2,
                             hbshader=self.shader,
                             spawnpoint=self.lvl.enemyspawnpoints[1],
                             initState='charging',
                             name = 'dummy2'  ) 
         self.dummy3 = Enemy(self.world, self.worldNP,enemy3, startpos = self.lvl.inactiveenemypos[2],
-                            posture=.01,
+                            posture=2,
                             hbshader=self.shader,
                             spawnpoint=self.lvl.enemyspawnpoints[2],
                             initState='charging',
                             name = 'dummy3'  ) 
-                            # parrypos=loader.loadModel('../models/atkdummy/enemyparrypos.glb'), )
+                            # parrypos=loader.loadModel('../models/enemies/enemyparrypos.glb'), )
     
         self.inactiveEnemies = []
         # self.enemies = []

@@ -87,12 +87,16 @@ class Level:#makd this a separate object
                 
 
 
+
+
                 self.arena = loader.loadModel('../models/lvl/arena.glb')
                 self.arena.reparentTo(NP)
                 
-                # for i in range(8):
-                #         self.findTris(f'tri{i}',self.arena)
-                self.findTris(f'tri1',self.arena)
+
+
+                for i in range(3):
+                        self.findTris(f'tri{i}',self.arena)
+                # self.findTris(f'tri1',self.arena)
                         
                 self.enemyPos()
                 self.spawnNo = 0
