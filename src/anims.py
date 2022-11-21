@@ -262,8 +262,9 @@ class Anims:
         #     self.current_seq = self.atkseq
         # print(self.character.isLanding)
                
-        if self.character.movementState == 'grinding':
-            self.animGrind()
+        if self.character.movementState == 'finisher':
+            # self.animGrind()
+            return
 
 
 
@@ -805,6 +806,8 @@ class Anims:
     def queueStage(self,x, qud):
         self.attackqueue = x 
         self.attackQueued = qud
+        # if qud==True:
+        #     self.attached = False
     def check4Queue(self):
         """if there is a queued attack, this will trigger it"""
         if self.attackQueued==True and self.attackqueue>0:
@@ -812,17 +815,21 @@ class Anims:
             if self.qdatk == 'slash':
             # self.finish()
             # if type == 'slash':
+                self.attached = False
                 self.slashAttack() 
             if self.qdatk == 'stab':
+                self.attached = False
                 self.stabattack()
             # if type == 'stab':
             # self.stabattack()
         else:
             print('no queued atack')      
-    def attach(self):
+    def attach(self,foot):
+       
         if self.attached == False: #and self.hitcontact==False:
             if self.character.state == "OF":
-                self.hb(parent=self.rightfoot, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
+            
+                self.hb(parent=foot, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
             if self.character.state == "mech":
                 self.hb(parent=self.bladeL, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
                 self.hb(parent=self.bladeR, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
@@ -843,7 +850,7 @@ class Anims:
     
     def playSound(self, sfx):
         sfx.play()
-    def animattackslash(self,order):
+    def animattackslash(self,order,foot):
         
         # def slashatk(anim,fx,fxtarget,n, activeframes=12, pauseframe=21, finalframe =30):
         def slashatk(anim,fx,fxtarget,n,sfx1, sfx2, aFramestart = 4,aFrameend=12, pauseframe=21, finalframe =30):
@@ -862,7 +869,7 @@ class Anims:
             k1 = self.charM.actorInterval(anim,loop = 0, startFrame=0, endFrame = aFramestart)
             acceptQueue = Func(self.queueStage, order, False)
             sound1 = Func(self.playSound, sfx1)
-            hb = Func(self.attach)
+            hb = Func(self.attach, foot)
             k2 = self.charM.actorInterval(anim, loop = 0,startFrame=(aFramestart+1), endFrame = aFrameend)
             offsettex = LerpTexOffsetInterval(fx, .5,(1,0),(0,0), textureStage=self.ts0)
             k3= self.charM.actorInterval(anim, loop = 0,startFrame=(aFrameend+1), endFrame = pauseframe)
@@ -940,7 +947,7 @@ class Anims:
             #     self.detachtrail(self.slash3trail)
             #     slashatk('pausekick', self.slash3trail,self.charM,'pausekick',self.preKicksfx, self.slash1sfx,aFramestart = 15,aFrameend=30, pauseframe = 32, finalframe=35)#, pauseframe = 49, finalframe=51)
             
-    def animattackstab(self, order):
+    def animattackstab(self, order, foot):
         
         # def stabatk(anim,fx,fxtarget, n,activeframes=8, pauseframe=15, finalframe =20):
         def stabatk(anim,fx,fxtarget, n,aFramestart = 2, aFrameend = 8, pauseframe=15, finalframe =20):    
@@ -959,7 +966,7 @@ class Anims:
             
             detach = Func(self.detachtrail, fx)
             atkfalse = Func(self.attackingFalse)
-            hb = Func(self.attach)
+            hb = Func(self.attach, foot)
 
             endqueue = Func(self.queueStage, 0, None)
             qcheck = Func(self.check4Queue)

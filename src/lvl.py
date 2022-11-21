@@ -117,6 +117,9 @@ class Level:#makd this a separate object
                 """includes positions for inactive enemies as well as enemy spawn points TODO add spawn pooints"""
                 self.inactiveenemypos = [] 
                 self.enemyspawnpoints = []
+                self.turretPos = []
+                for i in range(5):
+                        self.turretPos.append(self.arena.find(f'turretpos{i}').getPos(render))
                 for i in range(3):
                         self.inactiveenemypos.append(self.arena.find(f'enemypos{i}').getPos(render))   
                 for i in range(3):

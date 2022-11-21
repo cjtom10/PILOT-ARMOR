@@ -200,7 +200,7 @@ class Player(Anims,Actions, Fx):
             self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
 
     def playerTask(self):#, task):
-        # print(self.isStunned)
+
         if self.isStunned == True:
             return
         if self.state == 'OF':

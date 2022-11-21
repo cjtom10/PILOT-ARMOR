@@ -110,7 +110,7 @@ class PandaBulletCharacterController(object):
 
         }
         self.airstates = ["falling", "jumping","airattacking", "airdodge"]
-        self.nonInputStates = ["wallgrab","vaulting"]#, "jumping"]
+        self.nonInputStates = ["wallgrab","vaulting","finisher"]#, "jumping"]
         self.model = model
         self.d2wall=0
         # Prevent the KCC from moving when there's not enough room for it in the next frame
@@ -192,6 +192,7 @@ class PandaBulletCharacterController(object):
                           'r3' : '../models/player/char_runkey3.bam',
                           'r4' : '../models/player/char_runkey4.bam',
                           'takehit' : '../models/player/char_takedamage1.bam',
+                          'finisher' : '../models/player/char_finisher.bam',
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
         self.mech = Actor('../models/player/mech.bam', {
@@ -424,7 +425,8 @@ class PandaBulletCharacterController(object):
             "flying": self.__processFlying,
             "walking": self.__processGround,
             # "exitdodge": self.exitdodge,
-            "grinding": self.processGrind,
+            # "grinding": self.processGrind,
+            "finisher": self.processFinisher,
             # "exitgrind": self.exitGrind,
             "attacking": self.processAttack,
             "endaction": self.endaction,
@@ -482,6 +484,9 @@ class PandaBulletCharacterController(object):
         print('mech vec',self.mechVec)
         # self.mechVec.z = -3
         #add floor contact, downward vec
+    def processFinisher(self):
+        self.__currentPos = self.movementParent.getPos()
+        return
     def __land(self, smash = False):#task
         # self.wallRun[4] = True
         if self.canWallGrab == False:
@@ -639,22 +644,22 @@ class PandaBulletCharacterController(object):
         
         return
 
-    def testexitgrind(self):
-        taskMgr.add(self.exitGrind)    
+    # def testexitgrind(self):
+    #     taskMgr.add(self.exitGrind)    
 
-    def exitGrind(self, task):
-        # self.__jump()
-        # if not self.isOnGround():
-        #     self.__fall()
-        # else:
-        #     self.movementState = "ground"
+    # def exitGrind(self, task):
+    #     # self.__jump()
+    #     # if not self.isOnGround():
+    #     #     self.__fall()
+    #     # else:
+    #     #     self.movementState = "ground"
         
-        if task.time < 3:
-            self.setLinearMovement(self.dodgedir)
-            self.dodgedir *= .3
-            return task.cont
+    #     if task.time < 3:
+    #         self.setLinearMovement(self.dodgedir)
+    #         self.dodgedir *= .3
+    #         return task.cont
 
-        return task.done
+    #     return task.done
 
     def startdodge(self):
         self.char.stop()
@@ -1250,9 +1255,9 @@ class PandaBulletCharacterController(object):
     def __applyLinearVelocity(self):
         globalVel = self.movementParent.getQuat(render).xform(self.__linearVelocity) * self.__timeStep
        #usew this for grindrail
-        if self.movementState == 'grinding':
-        # if self.relative:
-            globalVel = render.getQuat().xform(self.__linearVelocity) * self.__timeStep
+        # if self.movementState == 'finisher':
+        # # if self.relative:
+        #     globalVel = render.getQuat().xform(self.__linearVelocity) * self.__timeStep
         # print(self.__linearVelocity)
         if self.predictFutureSpace and not self.__checkFutureSpace(globalVel):
             return

@@ -75,7 +75,7 @@ globalClock.setMode(globalClock.MLimited)
 globalClock.setFrameRate(120.0)
 
 from player import Player
-from enemies import Enemy
+from enemies import *
 from kcc import PandaBulletCharacterController
 from anims import Anims
 from keyboardinput import KeyboardInput
@@ -375,16 +375,14 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 self.lerpCam.pause()
             self.lerpCam = None
     def actionX(self):
-        for x in self.enemies:
-            if x.finishMe == True:
-                self.finisher(x)
-                return
+        self.finisherCheck()
         # print('closest enemy: ', self.closest)
         #finisher test
         # if self.closest!=None:
             # self.finisher(self.closest)
         # self.finisher(self.dummy) #need to access enemy model
             # return
+        # self.finisher(self.dummy3)
         self.player.doSlashatk()
 
         
@@ -545,7 +543,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.speed.setX(vx)
             self.speed.setY(vy)
             if self.player.state == 'mech':
-                if self.character.movementState == "dodging":
+                if self.character.movementState == "dodging" or self.character.movementState == "finisher":
                     return
                 self.speed.setZ(vz)
                 self.character.mechVec = self.speed
@@ -873,8 +871,11 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         if self.enemies:
             for enemy in self.enemies:
                 # if enemy.active ==True:   
-                    enemy.update()
-            
+                if enemy.type == 'Basic':
+                    enemy.updateBasic()
+        
+        if self.activeTurret!=None:
+            self.activeTurret.update()
      #-0------for testing purposes-------\
      # need to mkae this update AUTomticallly
         # self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)
@@ -900,12 +901,19 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             if self.enemies:
                 for enemy in self.enemies:
                     enemy.lookTarget = playerpos
+
+            # if self.activeTurret!=None:
+            #     self.activeTurret.lookTarget = playerpos
                 
             # if self.character.movementState!='dodging':
             #     self.dummy2.tracktarget()
             # self.dummy.lookTarget = playerpos
             # print(self.p2e)
             # print('closest eenemy', self.closest)
+
+
+
+
             if self.closest == None:
                 v = self.activeEnemiesPos.values()
                 closeval= min(v, key=lambda pt: (playerpos - pt).length())
@@ -1031,7 +1039,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         #                   'idle' : '../models/enemies/enemies_idle.bam',
         #                   'SMASH' : '../models/enemies/enemies_SMASH.bam',
         #                     })
-        self.turret = Actor('../models/enemies/turret.bam', {
+        turret1 = Actor('../models/enemies/turret.bam', {
                             'idle': '../models/enemies/turret_idle.bam',
                             'slash1': '../models/enemies/turret_slash1.bam',
                             'slash2': '../models/enemies/turret_slash1.bam',})
@@ -1046,7 +1054,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                           'bicepbreak' : '../models/enemies/enemy_bicepbreak.bam',
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
-                          'chargeup' : '../models/enemies/enemy_chargeup.bam'
+                          'chargeup' : '../models/enemies/enemy_chargeup.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
                             })
         enemy2 = Actor('../models/enemies/enemy.bam',{
                           'slash' : '../models/enemies/enemy_slash.bam',
@@ -1056,6 +1065,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                           'recoil1' : '../models/enemies/enemy_recoil1.bam',
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
                             })
         enemy3 = Actor('../models/enemies/enemy.bam',{
                           'slash' : '../models/enemies/enemy_slash.bam',
@@ -1065,6 +1075,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                           'recoil1' : '../models/enemies/enemy_recoil1.bam',
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
                             })
         # dummy2 = Actor()
         # # dummy.instanceTo(dummy2)
@@ -1074,21 +1085,27 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                             hbshader=self.shader,spawnpoint = self.lvl.enemyspawnpoints[0],
                             # initState='charging',
                             initState='charging',
+                            type = 'Basic',
                             name = 'dummy' )
         self.dummy2 = Enemy(self.world, self.worldNP,enemy2, startpos = self.lvl.inactiveenemypos[1],
                             posture=2,
                             hbshader=self.shader,
                             spawnpoint=self.lvl.enemyspawnpoints[1],
                             initState='charging',
+                            type = 'Basic',
                             name = 'dummy2'  ) 
         self.dummy3 = Enemy(self.world, self.worldNP,enemy3, startpos = self.lvl.inactiveenemypos[2],
                             posture=2,
                             hbshader=self.shader,
                             spawnpoint=self.lvl.enemyspawnpoints[2],
                             initState='charging',
+                            type = 'Basic',
                             name = 'dummy3'  ) 
                             # parrypos=loader.loadModel('../models/enemies/enemyparrypos.glb'), )
-    
+        self.turret1 = Turret(self.world, self.worldNP, turret1, self.lvl.turretPos[0], 'turret1')
+
+        
+        self. activeTurret = self.turret1
         self.inactiveEnemies = []
         # self.enemies = []
         self.activeEnemiesPos = {}

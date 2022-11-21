@@ -10,8 +10,76 @@ from direct.interval.IntervalGlobal import Sequence, Parallel, Func, Wait
 import random
 import math
 from lvl import HealthBar
+class Turret():
+    def __init__(self, world, parentnode, actor, pos, name ):
+        """turrets track player and shoot at them. wehen player is in range, they swing at them. they spawn one at a time"""
+        
+        self.pos = pos
+        self.model = actor
+        # self.model.setPos(0,0,-50)
+
+        self.lookTarget = (0,0,0)
+
+        self.capsule = BulletCapsuleShape(2,3)
+        self.controller =BulletCharacterControllerNode(self.capsule,0.4, name)
+                
+        self.NP =parentnode.attachNewNode(self.controller)
+        self.NP.setCollideMask(BitMask32.bit(1))
+        self.NP.setPos(pos)
+        world.attachCharacter(self.controller)
+
+        self.model.reparentTo(self.NP)
+        self.model.setPos(0,1,-2)
+
+        self.spawn()
+
+        #bullets shoot in linear lines away from emitter - emitter moves around
+        #bullets continue moving until they hit something
+        # max 10 bullets
+    
+        self.bullets = []
+
+        def bulletsetup(self, model, number ):
+            """sets up hitbox + model"""
+
+            model.reparentTo(self.model)
+
+
+        for x in range (10):
+            loader.loadModel('../models/enemies/orb.glb')
+
+        self.emitter = self.model.attachNewNode('bullet emitter')
+        self.orb = loader.loadModel('../models/enemies/orb.glb')
+        self.orb.reparentTo(self.model)
+
+    def shoot(self,orb):
+        
+        current = orb.getY(render)
+        orb.setY(current + 1)
+      
+
+    def spawn(self):
+            self.model.reparentTo(self.NP)
+        
+
+    def update(self):
+        self.shoot(self.orb)
+        # processaction={
+        #                     'idle': self.idleTurret,
+                           
+        #                     'melee': self.processAttack, 
+                          
+        #                     'stunned': self.isStunned,
+                      
+                          
+        #     }
+        anim = self.model.getCurrentAnim()
+        if anim!='idle':
+            self.model.loop('idle')
+        self.NP.lookAt(self.lookTarget)
+
 class Enemy():
-    def __init__(self, world, parentnode, actor, startpos,posture,hbshader,spawnpoint,initState,  name ):
+    def __init__(self, world, parentnode, actor, startpos,posture,hbshader,spawnpoint,initState, type, name ):
         self.active = False
         self.health = .01
         self.chargeAMT = 0.98
@@ -21,7 +89,7 @@ class Enemy():
         self.name = name
         self.spawnPoint = spawnpoint
         
-      
+        self.type = type
 
         self.isAttacking =False
         self.deflected = False
@@ -99,26 +167,17 @@ class Enemy():
         self.HB.setY(-.2)
         self.HB.show()
     # def resetPosture(self):
-    #     self.posture = posture
-    def updateTurret(self):
-                processaction={
-                            'idle': self.idle,
-                           
-                            'melee': self.processAttack, 
-                          
-                            'stunned': self.isStunned,
-                      
-                          
-            }
-        
-    def update(self):#, task):
+
+    def updateBasic(self):#, task):
         # print('posture', self.posture,'attackiing?', self.isAttacking)
         # if self.active == False:
         #     return\
 
         #finisher check
-        if self.posture<=0 and self.inRange == True:
-            self.finishMe = True
+        if self.posture<=0: #and self.inRange == True:
+            # self.finishMe = True
+            self.currentBehavior = 'stunned'
+            return
 
         if self.currentBehavior==None:
             self.randomizebehavior()
@@ -196,11 +255,11 @@ class Enemy():
             self.posture = 0.999
             print('stun!')
 
-    def die(self):
-        print('dead')
-        # self.world.removeRigidBody(self.capsule.node())
-        self.NP.detachNode()
-        taskMgr.remove(self.update)
+    # def die(self):
+    #     print('dead')
+    #     # self.world.removeRigidBody(self.capsule.node())
+    #     self.NP.detachNode()
+        # taskMgr.remove(self.update)
         #includes model, hb, character controller node, update task
     def atkhb(self,parent,shape ):
 
@@ -211,6 +270,7 @@ class Enemy():
         self.atkNode.reparentTo(parent)
         self.atkNode.node().addSolid(shape)
         self.atkNode.show()
+        
     def processAttack(self):
         self.speed = 0
         # print('qattacking state', self.d2p)
@@ -374,6 +434,8 @@ class Enemy():
         print('charging up')
         # chargeseq = Sequence()
         pass
-    def isStunned(Self):
-        # print('stuned!')
+    def isStunned(self):
+        print(self.name, 'is stuned!')
+        if self.d2p<5:
+            self.finishMe = True
         return

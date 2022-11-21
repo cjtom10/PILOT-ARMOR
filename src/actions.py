@@ -498,7 +498,7 @@ class Actions:
                 # if self.attackQueued==True:
                 #     print('attack already queued')
                 if self.attackQueued ==False:
-                    print('queue attack x- do slash # ', self.attackqueue+1)
+                    # print('queue attack x- do slash # ', self.attackqueue+1)
                     self.attackQueued=True   
                     self.qdatk = 'stab'  
             else:
@@ -558,20 +558,20 @@ class Actions:
                 self.atx.append('X')
 ##############   This part determines which anim to do
                 if order == 1  or order == 5 : 
-                    self.animattackslash(1)
+                    self.animattackslash(1, self.rightfoot)
 
                 if order == 2 or order ==6 or order == 3 and self.atx[2]=='-':   
-                    self.animattackslash(2)
+                    self.animattackslash(2,self.rightfoot)
 
                 if order == 3 and self.atx[2]!='-':
-                    self.animattackslash(3)
+                    self.animattackslash(3,self.rightfoot)
                 if order ==4:
                     if self.atx[2] == '-':
                         activeframes = 28
-                        self.animattackslash(4)
+                        self.animattackslash(4,self.rightfoot)
                         print('SPIN KICK')
                     else:
-                        self.animattackslash(3)
+                        self.animattackslash(3,self.rightfoot)
                 # print('len slash', len(self.atx))
         def slideAttack(self):
             print('slide attack')# finish the dodge do slide atack anim
@@ -614,11 +614,11 @@ class Actions:
                     self.character.movementState = "attacking"
                 order = len(self.atx) +1
                 if order == 1  or order == 4 : 
-                    self.animattackstab(1)
+                    self.animattackstab(1,self.leftfoot)
                 if order == 2  or order == 5 : 
-                    self.animattackstab(2)
+                    self.animattackstab(2,self.leftfoot)
                 if order == 3 or order ==6: 
-                    self.animattackstab(3)
+                    self.animattackstab(3,self.leftfoot)
             # print('len stab', len(self.atx))
         def doQueuedAttack(self, attack, order):
             return
