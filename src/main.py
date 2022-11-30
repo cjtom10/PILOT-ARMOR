@@ -193,7 +193,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
        
         self.position1 = None
 
-        self.nextTurretPos = 0
+        self.nextTurretPos = 1
 
         # self.accept('t',self.spawnEnemy,extraArgs= [self.dummy2])
         # base.camera.lookAt(self.turret1.NP)
