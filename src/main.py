@@ -88,7 +88,7 @@ from fx import Fx
 Dodgetime = 3
 jumpheight = 3
 startpos = (0, 0, 10)
-enemystartpos  = (0, 0, 0)
+enemystartpos  = (0, -50, 0)
 
 class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
@@ -122,7 +122,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # )
         render.clearLight()
         
-        self.startpos = (0,0,0,)
+        self.startpos = (0,-20,0,)
         self.enemystartpos=(0,0,0)
     # now, x and y can be considered relative movements
 
@@ -142,20 +142,61 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.osd.load()
         self.osd.render()
         
-        # self.footstep = loader.loadSfx('../sounds/footstep.wav')
-        # self.hitsfx =  loader.loadSfx('../sounds/hit.wav')
-        # self.slash1sfx = loader.loadSfx('../sounds/slash.wav')
-        # self.slash2sfx = loader.loadSfx('../sounds/slash1.wav')
-        # self.preKicksfx = loader.loadSfx('../sounds/prekick.wav')
-        # self.deflectsfx = loader.loadSfx('../sounds/deflect1.wav')
+        self.footstep = loader.loadSfx('../sounds/footstep.wav')
+        self.hitsfx =  loader.loadSfx('../sounds/hit.wav')
+        self.slash1sfx = loader.loadSfx('../sounds/slash.wav')
+        self.slash2sfx = loader.loadSfx('../sounds/slash1.wav')
+        self.preKicksfx = loader.loadSfx('../sounds/prekick.wav')
+        self.deflectsfx = loader.loadSfx('../sounds/deflect1.wav')
+
+
+              #2d display region for huyd
+        dr = base.win.makeDisplayRegion()
+        dr.sort = 20
+        myCamera2d = NodePath(Camera('myCam2d'))
+        lens = OrthographicLens()
+        lens.setFilmSize(2, 2)
+        lens.setNearFar(-1000, 1000)
+        myCamera2d.node().setLens(lens)
+
+        render2d = NodePath('myRender2d')
+        render2d.setDepthTest(False)
+        render2d.setDepthWrite(False)
+        render2d.setTransparency(1)
+        myCamera2d.reparentTo(render2d)
+        dr.setCamera(myCamera2d)
+
+        # aspect2d.setTransparency(1)
+        # self.playerhealth = HealthBar(pos=(-.9, .9, .5, .7))
+        # self.PAgauge = HealthBar(pos=(-.9, .9, .35, .45))
+        self.hud = TextNode('node name')
+        self.hud.setText(f"HP{self.player.health}PA{self.player.plotArmour}")
+        self.hudNP = aspect2d.attachNewNode(self.hud)
+        self.hudNP.setScale(0.07)
+        self.hudNP.setPos(-1.5,0,-.8)
+
+        
+        
+        hudmo = loader.loadModel('../models/hudBlank.glb')
+        hudmo.reparentTo(render2d)
+        hudmo.setShader(self.shader)
+        hudmo.setTransparency(TransparencyAttrib.MAlpha)
+        # self.playerhealth.reparentTo(render2d)
+        # self.PAgauge.reparentTo(render2d)
+        hudmo.setZ(.85)
+        
+        hudmo.setX(-.57)
+        hudmo.setScale(.5,0,0)
+        # hudmo.setScale(.2)
 
         ml.resolveMouse()
        
         self.position1 = None
-        
+
+        self.nextTurretPos = 0
 
         # self.accept('t',self.spawnEnemy,extraArgs= [self.dummy2])
-        
+        # base.camera.lookAt(self.turret1.NP)
         
 #######Anim names
         self.Idle = 'idle'
@@ -176,15 +217,20 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         taskMgr.add(self.debugOSDUpdater, "update OSD")
         taskMgr.doMethodLater(2, self.spawnEnemy, 'spawn enemies')
 
+        self.spawnTurret(self.turret1,self.lvl.turretPos[0])
+        self.spawnTurret(self.turret2,self.lvl.turretPos[1])
+
         # self.isIdle=False
         # self.isWalking = False
         # self.leftjoystick = False
         # self.idleDirection = 0
         self.lockedOn = False
         self.playerTakingHit = False
+        self.lookatTurret = False
 
         # self.camtarg = NodePath('cam target')
         self.camtarg = loader.loadModel('../models/norm.glb')
+        self.lockonPos = NodePath('lockon pos')
         # self.camtarg.reparentTo(self.worldNP)
 
         self.grindseq = None
@@ -193,29 +239,68 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         base.cTrav = traverser
 
         # base.cTrav = CollisionTraverser()
+        self.accept('control', self.turret1.fire)
+        
 
         # Initialize the handler.
+        self.collqueue = CollisionHandlerQueue()
         self.collHandEvent = CollisionHandlerEvent()
         self.collHandEvent.addInPattern('%fn-into-%in')
-        self.collHandEvent.addOutPattern('%fn-out-%in')
+
+        self.collHandEvent.addOutPattern('%fn-out-%(tag)ih')
 ######player
         traverser.addCollider(self.player.atkNode, self.collHandEvent)
         traverser.addCollider(self.player.parryNode, self.collHandEvent)
+        # traverser.addCollider(self.player.parryNode, self.collqueue)
+
+        
+
+        traverser.traverse(render)
+
+
 #######enemies aTK HITBOXES
         # if self.enemies:
         for enemies in self.enemies:
             traverser.addCollider(enemies.atkNode, self.collHandEvent)
-#
+
+        for turret in self.turrets:
+            traverser.addCollider(turret.HB, self.collHandEvent)
+            traverser.addCollider(turret.atkNodeL, self.collHandEvent)
+            traverser.addCollider(turret.atkNodeR, self.collHandEvent)
+           
+           
+            for bullet in turret.bullets:
+                traverser.addCollider(bullet.cNP, self.collqueue)
+                traverser.addCollider(bullet.cNP, self.collHandEvent)
+                
+                # self.accept(f'{hb.name}-into-arena', self.bullethitwall)
+                # traverser.addCollider(hb, queue)
+            # for key, value in turret.bullets.items():
+            #     traverser.addCollider(key.cNP, self.collHandEvent)
+        # list(self.bullets.keys())[2]
+
 #Events for ur guy taking hits
         # if self.playerTakingHit ==False:
         # if self.enemies:
+
+        # for geom in lvl.arenaGeoms:
+
+        # self.accept(f'parry-into-geom{n}', self.bullethitwall)
+       
+
+####3##Player takes hits
         for bodypart in self.player.HB: 
             for enemy in self.enemies:
                 self.accept(f'{enemy.NP.name}attack-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1]) #FIX should oinly takle one hit at a time
                 self.accept(f'{enemy.NP.name}attack-into-pdodgecheck', self.pdodge,  extraArgs=[True])
                 self.accept(f'{enemy.NP.name}attack-out-pdodgecheck', self.pdodge,  extraArgs=[False])
+                for bullet in turret.bullets:
+                    self.accept(f'{bullet.cNP.name}-into-{bodypart.name}', self.getShot, extraArgs=[bodypart.name, bullet, 0.1])
 
-
+            for turret in self.turrets:
+                self.accept(f'{turret.NP.name}attackL-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1])
+                self.accept(f'{turret.NP.name}attackR-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1])
+########enemy takesa hits
         for enemy in self.enemies:
             # if enemy.isHit==True:
             #         continue# disables multiple hits on single animation
@@ -224,12 +309,28 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 self.accept(f'attack-into-{bodypart.name}', self.hitEnemy, extraArgs=[enemy, bodypart.name]) #FIX should oinly takle one hit at a time
                 self.accept(f'parry-into-{enemy.NP.name}attack', self.deflectcontact, extraArgs=[enemy])
 
+        for turret in self.turrets:
+            self.accept(f'attack-into-{turret.name}hb', self.hitTurret, extraArgs=[turret])
+            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret])
+            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret])
+            for bullet in turret.bullets:
+                # print('bullet hb name!', bullet.cNP.name)
+                for n in range(self.lvl.geomcount):
+                    self.accept(f'{bullet.cNP.name}-into-geom{n}', self.bullethitwall,extraArgs=[bullet])
+            # # for n in 
+            #     f'bullet{n}HB'
+            #     for x in lvl.arenaGeoms:
+            #         self.accept(f'attack-into-{turret.name}hb', self.hitTurret, extraArgs=[turret])
+                # child.ls()
+                
+
 
         ##character speed
         # self.speed = Vec3(0, 0, 0)
         # _____HANDLER_____
  # shrink = LerpScaleInterval(self.worldNP, 3, .3)
-#####Collision events      
+#####Collision events   
+# =   
     def hitEnemy(self,enemy,part,entry):#actor
         if enemy.isHit==True:
             print(enemy.NP.name,'is already hit')
@@ -265,15 +366,94 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         if enemy.health<=0:
             self.enemydeath(enemy)
         # shrink.start()
+    def parryTurret(self, turret,entry):
+        print(f'successfuluy parried {turret.name}. it is stagger now')
+    def hitTurret(self, turret, entry):
+        # print('hit',turret.name)
+        # turret.health -= .25
+        # if turret.health<=0:
+        #     # self.enemydeath(turret)
+        #     turret.dieSeq()
+        if turret.isHit==True:
+            print(turret.NP.name,'is already hit')
+            return
+        print(f'{turret.NP.name} gets hit')
+        # print(entry)
+        # self.attached = False
+        # self.hitcontact = True
+        # self.atkNode.node().clearSolids()
+        turret.isHit = True
+        self.hitsfx.play()
+        turret.health-=.25
+    
+        # for node in enemy.Hitbox:
+        #     node.node().clearSolids()
+            # print('clear', node)
+        # enemy.solidsCleared = True    
+
+        def twitch(p):
+            #TODO add an anim instead of this
+            # torso=enemy.model.controlJoint(None, "modelRoot", "torso")
+            turret.model.setP(p)
+        def end():
+            self.hitcontact=False
+            turret.isHit = False
+       #stop = Func(enemy.model.stop())#enemy anim stop
+        a = Func(twitch, 30)
+        b = Func(twitch, 0)
+        p = Func(self.player.animseq.pause)#### player hitstopping
+        r = Func(self.player.animseq.resume)
+        e =Func(end)
+        
+        hitseq = Sequence(a, p, Wait(.1),b, r,e).start()
+        if turret.health<=0:
+            turret.dieSeq()
+            self.nextTurretPos+=1
+    def bullethitwall(self,bullet, entry):
+        # print(bullet.name, 'hits wall')
+        # bullet.cNP.node().clearSolids()
+        # bullet.HBattached = False
+        bullet.hit()
+        # turret_name = str(entry).split('/')[2]
+        # turret = [t for t in self.turrets if t.name == turret_name][0]
+        # turret.reset_bullet(entry)
+        
+        # print("i found turret", turret.name)
+
+
+    def getShot(self,name,bullet,  amt, entry):
+        # if self.player.isStunned
+        bullet.hit()
+        # self.player.iframes()
+       
+        def twitch(p):           
+            torso=self.player.charM.controlJoint(None, "modelRoot", "torso")
+            torso.setP(p)
+        def end():
+            # torso.removeNode()
+            self.player.charM.releaseJoint("modelRoot", "torso")
+        #     self.hitcontact=False
+       #stop = Func(enemy.model.stop())#enemy anim stop
+        a = Func(twitch, 30)
+        b = Func(twitch, 0)
+        # p = Func(self.player.animseq.pause)#### player hitstopping
+        # r = Func(self.player.animseq.resume)
+        e =Func(end)
+        
+        hitseq = Sequence(a,  Wait(.1),b,e).start()
+        print('plaayrr gets shot. Oh no!', name)
+
     def takeHit(self, name, enemy,amt, entry):
         """amt is the amount opf damage, varies from enemy + attack"""
-        if enemy.hasHit ==True:
-            print('im alrteady hit gd')
-            return
-        self.player.takeHit()
-        enemy.atkNode.node().clearSolids()
-        enemy.hasHit=True 
-        print(  enemy.name, 'hits players', name)
+        if enemy!=None:
+            if enemy.hasHit ==True:
+                print('im alrteady hit gd')
+                return
+            self.player.takeHit()
+            enemy.atkNode.node().clearSolids()
+            enemy.hasHit=True 
+            print(  enemy.name, 'hits players', name)
+        # self.player.takeHit()
         netDmg = amt - self.player.plotArmour
 
         if self.player.plotArmour > 0:
@@ -295,8 +475,15 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def deflectcontact(self,enemy, entry):
         print(f'player defelects {enemy.name}', 'enemyposture:',enemy.posture)
+        if enemy.hasHit ==True:
+                print('im alrteady hit parrued')
+                return
+        enemy.hasHit = True
         #pause anims opn enemy/p[layer, play recoil anims]
         #deplete posture from enemy, if posture -== 0 enemy enters stun
+        self.player.parryNode.node().clearSolids()
+        enemy.atkNode.node().clearSolids()
+        # self.player.iframes
         self.deflectsfx.play()
 
         self.deflected('recoil1',enemy)
@@ -325,9 +512,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         targ = self.charM.getHpr(render)
         # base.camera.setHpr(self.charM, 0,0,0)
         i = LerpHprInterval(base.camera, .2,targ ).start()
-        if self.character.movementState=='wallgrab' or self.character.movementState == 'wallgrab':
-            print('wall run recenter cam')
-            self.wallruncam=True
+        # if self.character.movementState=='wallgrab' or self.character.movementState == 'wallgrab':
+        #     print('wall run recenter cam')
+        #     self.wallruncam=True
     def doExit(self):
         self.cleanup()
         sys.exit(1)
@@ -347,7 +534,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
 
     def actionStickEvent(self):
-        if self.pauseframe==True or self.buffer == True:
+        if self.player.pauseframe==True or self.player.buffer == True:
             print('do a little flip in this direction', 'X',self.leftX, 'Y', self.leftY)
         self.stickEvent=False
         self.stickEventTriggered=True
@@ -357,7 +544,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.player.doDeflect()
     def actionrb(self):
         # print('p2e',self.p2e)
-        # self.bicepbreak(self.dummy2)
+        # self.bicepbreak(self.dummy2)closest
         # ml.disable()
         # self.recenterCam()
         self.lockOn()
@@ -377,12 +564,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     def actionX(self):
         self.finisherCheck()
         # print('closest enemy: ', self.closest)
-        #finisher test
+        # finisher test
         # if self.closest!=None:
-            # self.finisher(self.closest)
+        #     self.finisher(self.closest)
         # self.finisher(self.dummy) #need to access enemy model
             # return
         # self.finisher(self.dummy3)
+        # return
         self.player.doSlashatk()
 
         
@@ -543,7 +731,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             self.speed.setX(vx)
             self.speed.setY(vy)
             if self.player.state == 'mech':
-                if self.character.movementState == "dodging" or self.character.movementState == "finisher":
+                if self.character.movementState == "dodging" or self.character.movementState == "finisher" :#or self.player.isStunned:
                     return
                 self.speed.setZ(vz)
                 self.character.mechVec = self.speed
@@ -553,9 +741,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 # print('speed', self.speed, 'mechvec', self.character.mechVec)
                 # print(self.speed)
 
-
+        # if self.player.isStunned:
+            
         # if self.character.movementState!="attacking" and self.character.movementState  not in self.character.nonInputStates:
-        if self.player.character.movementState=="attacking" or self.player.character.movementState   in self.player.character.nonInputStates:
+        if self.player.character.movementState=="attacking" or self.player.character.movementState   in self.player.character.nonInputStates: #or self.player.isStunned:
             self.speed = Vec3(0,0,0)
             # self.character.setAngularMovement(omega)
             # self.character.setLinearMovement(self.speed, True)
@@ -627,6 +816,25 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def update(self, task):
         """Updates the character and listens for joystick-activated events"""
+
+        #check for bullets hitting the arena
+        # for entry in self.collqueue.entries:
+        #     # print(entry.getFromNodePath().name)
+        #     if (str(entry.getIntoNodePath()).split('/')[2]) =='arena':
+        #         print(entry.getFromNodePath().name) 
+        #         if 'bullethb' in entry.getFromNodePath().name:
+        #             print(entry.getFromNodePath(),'contact w arena')
+        #             self.bullethitwall(entry.getFromNodePath())
+        #     # if entry.getFromNodePath().name
+            # print('entry',entry)
+
+        # queue = CollisionHandlerQueue()
+        # # traverser.traverse(render)
+        # print('q entries')
+        # queue.getNumEntries()
+        # queue = CollisionHandlerQueue()
+        # for entry in queue.entries:
+        #     print(entry)        
         # print(self.character.movementState)
         # print('attack queue', self.attackqueue, 'a/ttack queued', self.attackQueued)
         # print('jumpdir', self.character.jumpdir)
@@ -682,6 +890,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         
         # if self.character.movementState not in self.character.nonInputStates:
         # if self.character.movementState !='wallgrab' or self.character.movementState !='vaulting':
+        # if self.character.movementState == "finisher":
+        #     return
+        # print('m,mvmt state', self.character.movementState)
         self.processInput(dt)
         self.player.playerTask()
             # print(self.inputDelay)
@@ -752,7 +963,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.updateAnim()
 
         self.closestEnemy()
-        self.playerhealth.setHealth(self.player.health)
+        # self.playerhealth.setHealth(self.player.health)
+        self.hud.setText(f"HP{round(self.player.health*100)}\nPA{round(self.player.plotArmour*100)}")
 
         self.targetNode.setPos(self.character.movementParent.getPos(render))
         
@@ -761,21 +973,27 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.charM.setH(render, self.direction)
     def camtask(self):#, task):###move camera stuff here
         #straighten cam
-      
+        # self.lvl.arenaSensorcheck(self.lvl.sensor1)
         #     return
         #     if 100> base.camera.getH(self.charM) <80:
         #         print('ml x += .5')
         if self.player.animspecial==True:
             return
-        # if ml.disabled == True and self.character.movementState != "grinding":
-        #     ml.enable()
-        #     ml.disabled =False
-            # print('enable mouse')
         ml.orbitCenter = self.player.character.getPos(self.worldNP)
         cambuffer = NodePath('cambufffer')
         camPos = base.camera.getPos(render)
         cambuffer.setPos(self.player.character.getPos(render))
         cambuffer.reparentTo(self.player.character.movementParent)
+        # if ur in hallwayu
+        if self.lookatTurret == True:
+            # base.camera.setZ(8)
+            base.camera.lookAt(self.turret1.NP)
+            
+        # if ml.disabled == True and self.character.movementState != "grinding":
+        #     ml.enable()
+        #     ml.disabled =False
+            # print('enable mouse')
+
         ######Lock on cam:
 
         def moveCam(node):
@@ -837,9 +1055,23 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 return    
     #####LOCK ON CAM
         if self.lockedOn==True:
+
+            direction = self.character.movementParent.getH()
+            targ = self.charM.getHpr(render)
+            # base.camera.setHpr(self.charM, 0,0,0)
+            
+    
+
+              # base.camera.lookAt(self.camtarg)
             self.camtarg.setH(self.charM.getH(render))
-            # self.camtarg.setPos(self.midpoint)
+            base.camera.setY(-5)
+            # self.lockonPos.reparentTo(self.charM)
+            # self.lockonPos.setY(-5)
+            # base.camera.setH(self.charM.getH())
+            self.camtarg.setPos(self.midpoint)
             base.camera.setY(base.camera, -(self.p2e))
+            # base.camera.reparentTo(self.charM)
+            # base.camera.setPos(self.lockonPos.getPos(render))
             # print('player2enemy',self.p2e)
             
             if self.lerpCam==None:
@@ -868,14 +1100,22 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     def updateEnemies(self, task):
         # print('acitve enemies', self.enemies)
         # print('dummy current behavior', self.dummy.currentBehavior)
+
         if self.enemies:
             for enemy in self.enemies:
                 # if enemy.active ==True:   
                 if enemy.type == 'Basic':
                     enemy.updateBasic()
         
-        if self.activeTurret!=None:
-            self.activeTurret.update()
+        et = task.time
+        turretDT = globalClock.dt
+        # frametime = globalClock.getFrameTime()
+        # if self.activeTurret!=None:
+        #     self.activeTurret.update(turretDT, et)
+        for turrets in self.turrets:
+            turrets.update(turretDT,et)
+            if turrets.active ==False:
+                self.spawnTurret(turrets,self.lvl.turretPos[self.nextTurretPos] )
      #-0------for testing purposes-------\
      # need to mkae this update AUTomticallly
         # self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)
@@ -901,11 +1141,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             if self.enemies:
                 for enemy in self.enemies:
                     enemy.lookTarget = playerpos
-
+            if self.activeTurret!=None:
+                for turret in self.turrets:
+                    turret.lookTarget = playerpos
             # if self.activeTurret!=None:
             #     self.activeTurret.lookTarget = playerpos
                 
-            # if self.character.movementState!='dodging':
+            # eif self.character.movementState!='dodging':
             #     self.dummy2.tracktarget()
             # self.dummy.lookTarget = playerpos
             # print(self.p2e)
@@ -972,21 +1214,24 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
 
         
-        shape = BulletBoxShape(Vec3(1, 1, 2.5))
-        self.ghost = self.worldNP.attachNewNode(BulletGhostNode('Ghost'))
-        self.ghost.node().addShape(shape)
-        self.ghost.setPos(-5.0, 0, 10)
-        self.ghost.setCollideMask(BitMask32.allOn())
-        self.world.attachGhost(self.ghost.node())
+        # shape = BulletBoxShape(Vec3(1, 1, 2.5))
+        # self.ghost = self.worldNP.attachNewNode(BulletGhostNode('Ghost'))
+        # self.ghost.node().addShape(shape)
+        # self.ghost.setPos(-5.0, 0, 10)
+        # self.ghost.setCollideMask(BitMask32.allOn())
+        # self.world.attachGhost(self.ghost.node())
         
         # taskMgr.add(self.checkGhost, 'checkGhost')
 
 ###########Char +_ enemoies here
 
-        initcamPos = Point3(0,-15, 5)
+        initcamPos = Point3(0,-15, 7)
         # self.character = PandaBulletCharacterController(self.world, self.worldNP, 4, 1.5,.5, 1,)
         self.enemies = []
 
+        # startpos = (0,-200,0)
+        startpos = (40,-20,0)
+        startH = 90
         self.player = Player(self.world, self.worldNP, self.gamepad, self.enemies, 'OF')
         self.character = self.player.character
         ##
@@ -996,8 +1241,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.player.character.setPos(render, startpos)
         base.camera.setPos(startpos)
         base.cam.setPos(initcamPos)
-        base.camera.setP(render, -90)
-        # self.charlight = PointLight('character')
+        # base.camera.setP(render, -90)
+
+        self.player.character.setH(render, 90)
+        base.camera.setH(-100)
+        # base.cam.setPos(initcamPos)
+        # base.camera.setP(render, -90)
+        # # self.charlight = PointLight('character')
         # self.charlightNP = self.character.movementParent.attachNewNode(self.charlight)
         # self.charlight.setAttenuation((0.1, 0.04, 0.0))
         # render.setLight(self.charlightNP)
@@ -1010,9 +1260,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # self.pdodgecheck = NodePath(CollisionNode('pdodgecheck'))
         # self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
         # self.pdodgecheck.show()
-        self.playerhealth = HealthBar(pos=(-1, 1, .9, 1.1))
-        self.playerhealth.reparentTo(aspect2d)
-        self.playerhealth.setY(5)
+
         # self.scarfSetup()
 
         ####Nodes around player for enemies to wlk to
@@ -1042,11 +1290,19 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         turret1 = Actor('../models/enemies/turret.bam', {
                             'idle': '../models/enemies/turret_idle.bam',
                             'slash1': '../models/enemies/turret_slash1.bam',
-                            'slash2': '../models/enemies/turret_slash1.bam',})
+                            'slash2': '../models/enemies/turret_slash1.bam',
+                            'staggerL': '../models/enemies/turret_staggerL.bam',
+                            'staggerR': '../models/enemies/turret_staggerR.bam',})
+        turret2 = Actor('../models/enemies/turret.bam', {
+                            'idle': '../models/enemies/turret_idle.bam',
+                            'slash1': '../models/enemies/turret_slash1.bam',
+                            'slash2': '../models/enemies/turret_slash1.bam',
+                            'staggerL': '../models/enemies/turret_staggerL.bam',
+                            'staggerR': '../models/enemies/turret_staggerR.bam',})
         # self.turret.reparentTo(self.worldNP)
         # self.turret.setPos(10,0,0)
         enemyM = Actor('../models/enemies/enemy.bam',{
-                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'slash' : '../models/enemies/enemy_slash1.bam',
                           'slash2' : '../models/enemies/enemy_slash2.bam',
                           'idle' : '../models/enemies/enemy_idle.002.bam',
                           'deflected' : '../models/enemies/enemy_deflected.bam',
@@ -1055,19 +1311,43 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
                           'chargeup' : '../models/enemies/enemy_chargeup.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
                           'finished' : '../models/enemies/enemy_finished.bam'
                             })
         enemy2 = Actor('../models/enemies/enemy.bam',{
-                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'slash' : '../models/enemies/enemy_slash1.bam',
                           'idle' : '../models/enemies/enemy_idle.002.bam',
                           'slash2' : '../models/enemies/enemy_slash2.bam',
                           'deflected' : '../models/enemies/enemy_deflected.bam',
                           'recoil1' : '../models/enemies/enemy_recoil1.bam',
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
                           'finished' : '../models/enemies/enemy_finished.bam'
                             })
         enemy3 = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash1.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
+                            })
+        enemy4 = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash1.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
+                            })
+        enemy5 = Actor('../models/enemies/enemy.bam',{
                           'slash' : '../models/enemies/enemy_slash.bam',
                           'slash2' : '../models/enemies/enemy_slash2.bam',
                           'idle' : '../models/enemies/enemy_idle.002.bam',
@@ -1075,6 +1355,18 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                           'recoil1' : '../models/enemies/enemy_recoil1.bam',
                           'death' : '../models/enemies/enemy_death.bam',
                           'run' : '../models/enemies/enemy_walk.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
+                          'finished' : '../models/enemies/enemy_finished.bam'
+                            })
+        enemy6 = Actor('../models/enemies/enemy.bam',{
+                          'slash' : '../models/enemies/enemy_slash.bam',
+                          'slash2' : '../models/enemies/enemy_slash2.bam',
+                          'idle' : '../models/enemies/enemy_idle.002.bam',
+                          'deflected' : '../models/enemies/enemy_deflected.bam',
+                          'recoil1' : '../models/enemies/enemy_recoil1.bam',
+                          'death' : '../models/enemies/enemy_death.bam',
+                          'run' : '../models/enemies/enemy_walk.bam',
+                          'staggered': '../models/enemies/enemy_staggered.bam',
                           'finished' : '../models/enemies/enemy_finished.bam'
                             })
         # dummy2 = Actor()
@@ -1102,13 +1394,18 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                             type = 'Basic',
                             name = 'dummy3'  ) 
                             # parrypos=loader.loadModel('../models/enemies/enemyparrypos.glb'), )
-        self.turret1 = Turret(self.world, self.worldNP, turret1, self.lvl.turretPos[0], 'turret1')
+        self.turret1 = Turret(self.world, self.worldNP, turret1, self.lvl.inactiveenemypos[3], self.lvl.turretPos[1], 'turret1')
+        self.turret2 = Turret(self.world, self.worldNP, turret2, self.lvl.inactiveenemypos[4],self.lvl.turretPos[2], 'turret2')
 
         
         self. activeTurret = self.turret1
+        self.turrets = []
         self.inactiveEnemies = []
         # self.enemies = []
         self.activeEnemiesPos = {}
+        
+        #Justr for now =3
+        self.activeEnemiesPos.update({self.turret1.NP:self.turret1.NP.getPos()})
 
         # self.dummy.atkhb(self.dummy.model.expose_joint(None, 'modelRoot', 'blade'),
         #               CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3))
@@ -1128,15 +1425,20 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.activeEnemiesPos.update({self.dummy.NP:self.dummy.NP.getPos()})
         self.activeEnemiesPos.update({self.dummy2.NP:self.dummy2.NP.getPos()})
         self.activeEnemiesPos.update({self.dummy3.NP:self.dummy3.NP.getPos()})
+
+        self.turrets.append(self.turret1)
         # if self.activeEnemies:
         for enemy in self.enemies:
                 self.charhitbox(enemy.model, enemy.Hitbox,False, enemy.name)
                  
         taskMgr.add(self.updateEnemies, 'update enemies')
-
+    def turretspawnpoint(self, x):
+        # for x in range(len(self.lvl.turretPos))
+        # len(self.lvl.turretPos)%
+        self.nextTurretPos = x+1
     def spawnEnemy(self, task):
         
-        print(self.lvl.spawnNo, len(self.enemies))
+        print('spawn no:',self.lvl.spawnNo, len(self.enemies))
         # enemy = self.dummy
         # for x in self.enemies:
         # # print(self.enemies[self.lvl.spawnNo].name)
@@ -1163,13 +1465,20 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             return task.again
         
         #teleport enemies from inactive to active, plays spawn animation
+    def spawnTurret(self, turret, pos):
+        #update the spawn pos
+        turret.health = .99
+        self.lvl.turretPos[self.nextTurretPos%len(self.lvl.turretPos)]
+        print('next turret spawn pos', self.nextTurretPos)
+        turret.pos = pos
+        turret.spawnSeq()
 
     def enemydeath(self, enemy):
         print('death')
         if self.lockedOn==True:
             self.lockedOn = False
         self.inactiveEnemies.append(enemy)
-        self.enemies.remove(enemy)
+        # self.enemies.remove(enemy)
         # play death anim, telport enemy aWay
         # enemy.model.play('death'
 
@@ -1181,12 +1490,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         dieseq = Sequence(die, tp)
         dieseq.start()
         taskMgr.remove(f'{enemy.name}update')
-    # def enemyPosInactive(self):
-    #             self.inactiveenemypos = [] 
-    #             for i in range(3):
-    #                     self.inactiveenemypos.append(self.arena.find(f'enemypos{i}').getPos(render))
-                # print(self.inactiveenemypos[0])
+    def turretDeath(self):
+        #same as enemy death except spawn the turret elsewhere
 
+        pass
 
     def toggleDebug(self):
         if self.debugNP.isHidden():

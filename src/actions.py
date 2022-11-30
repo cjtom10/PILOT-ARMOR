@@ -338,8 +338,9 @@ class Actions:
             
             if self.character.movementState == "attacking":
                 if self.character.isAttacking == True:
-                    print('cant deflect-attacking')
-                    return
+                    # print('cant deflect-attacking')
+                    # return
+                    self.finish()
                 if self.character.isParrying == True:
                     print('cant deflect-deflecting')
                     return    
@@ -406,7 +407,7 @@ class Actions:
 
         def doJump(self):
        
-            print('jumpdir', self.character.jumpdir)
+            # print('jumpdir', self.character.jumpdir)
             if self.gamepad:
                 # if self.character.movementState == 'ground':
                 #     q = 20
@@ -776,5 +777,8 @@ class Actions:
             def stun():
                 self.isStunned ^= True
             stun = Func(stun)
-            self.stunseq = Sequence(Parallel(s1, stun), stun)
+            iframes = Func(self.iframes)
+            end = Func(self.addSolids)
+            self.stunseq = Sequence(Parallel(s1, stun, iframes), 
+                                    Parallel(end, stun))
             self.stunseq.start()

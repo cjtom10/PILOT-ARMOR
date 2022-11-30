@@ -159,6 +159,7 @@ class PandaBulletCharacterController(object):
                           'sprint' : '../models/player/char_run.001.bam',
                           'attackwalk' : '../models/player/char_atackwalk.bam',
                           'jump' : '../models/player/char_Jump.bam',
+                          'jump2' : '../models/player/char_Jump2.bam',
                           'falling' : '../models/player/char_falling.bam',
                           'land' : '../models/player/char_land2.001.bam',
                           'shortland' : '../models/player/char_shortland.bam',
@@ -432,6 +433,7 @@ class PandaBulletCharacterController(object):
             "endaction": self.endaction,
             "vaulting": self.__processJumping,
             "wallgrab": self.processWallGrab,
+            # "stunned": self.processFinisher,
             # "mech": self.processMech,
             # \\"running": 
         }
@@ -486,6 +488,7 @@ class PandaBulletCharacterController(object):
         #add floor contact, downward vec
     def processFinisher(self):
         self.__currentPos = self.movementParent.getPos()
+        self.setLinearMovement(0)
         return
     def __land(self, smash = False):#task
         # self.wallRun[4] = True
@@ -787,6 +790,7 @@ class PandaBulletCharacterController(object):
 
     def endaction(self):
         """buffer state for exiting attack/parry/vault etc"""
+        # print('state end action')
         # if "exitdodge" not in self.movementStateFilter[self.movementState]:
         #     return
         # if self.queueJump == True:
@@ -1004,10 +1008,10 @@ class PandaBulletCharacterController(object):
             self.enableVaulting=False
             return
         
-        # print(norm)
-        # elif norm == 1:
+        # print('ledgegrab norma;l',norm)
+        elif norm == 1:
         
-        else:
+        # else:
             self.enableVaulting=True
             print('vault enabled')
         self.ledgeZ = ledgecontact.getHitPos().z

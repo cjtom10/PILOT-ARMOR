@@ -11,75 +11,309 @@ import random
 import math
 from lvl import HealthBar
 class Turret():
-    def __init__(self, world, parentnode, actor, pos, name ):
+    def __init__(self, world, parentnode, actor,initpos, pos, name ):
         """turrets track player and shoot at them. wehen player is in range, they swing at them. they spawn one at a time"""
         
         self.pos = pos
         self.model = actor
+        self.name = name
+        self.worldNP = parentnode
+        self.initpos = initpos
         # self.model.setPos(0,0,-50)
 
-        self.lookTarget = (0,0,0)
+        self.lookTarget = Vec3(0,0,0)
 
         self.capsule = BulletCapsuleShape(2,3)
         self.controller =BulletCharacterControllerNode(self.capsule,0.4, name)
                 
         self.NP =parentnode.attachNewNode(self.controller)
         self.NP.setCollideMask(BitMask32.bit(1))
-        self.NP.setPos(pos)
+        self.NP.setPos(initpos)
         world.attachCharacter(self.controller)
 
-        self.model.reparentTo(self.NP)
-        self.model.setPos(0,1,-2)
 
-        self.spawn()
+
+        self.active =False
+
+        self.health = .99
+
+        # self.healthbar = HealthBar(pos=(-1, 1, .9, 1.1))
+        # # self.healthbar.postureBar(pos = (-1,1,0.6, .8))
+        # self.healthbar.setCompass(base.camera)
+        # self.healthbar.reparentTo(self.NP)
+        # self.healthbar.setZ(5)
+        
+        self.isSpawning = False
+        self.isHit = False
+
+        self.hbSetup()
 
         #bullets shoot in linear lines away from emitter - emitter moves around
         #bullets continue moving until they hit something
         # max 10 bullets
-    
         self.bullets = []
-
-        def bulletsetup(self, model, number ):
-            """sets up hitbox + model"""
-
-            model.reparentTo(self.model)
-
-
-        for x in range (10):
-            loader.loadModel('../models/enemies/orb.glb')
-
-        self.emitter = self.model.attachNewNode('bullet emitter')
+        # self.bulletHBs = []
+       
         self.orb = loader.loadModel('../models/enemies/orb.glb')
-        self.orb.reparentTo(self.model)
+        self.emitter = self.model.attachNewNode('bullet emitter')
+        self.emitter2 = self.model.attachNewNode('bullet emitter2')
+        self.emitter.setZ(1)
+        self.orb = loader.loadModel('../models/enemies/orb.glb')
+        self.orb.reparentTo(self.emitter)
+        # print('bullets',self.bullets)
+        self.bulletsetup(20)
 
-    def shoot(self,orb):
+        self.atkseq = None
+        self.isAttacking=False
+        self.attached = False
+        self.atkNodeL = NodePath(CollisionNode(f'{self.name}attackL'))
+        self.atkNodeR = NodePath(CollisionNode(f'{self.name}attackR'))
+        self.forearmR = self.model.exposeJoint(None, 'modelRoot', 'forearm.R')
+        self.forearmL = self.model.exposeJoint(None, 'modelRoot', 'forearm.L')
+    def tracktarget(self):
+        a = self.model.getX(render) - self.lookTarget.x
+        b = self.model.getY(render) - self.lookTarget.y
+
+        h = math.atan2(a,-b)
+        angle = math.degrees(h) 
+
+        # self.closest = closest
+        self.model.setH(render, angle)     
+    def hbSetup(self):
+        #hb for TAKING DAMAGE
+        capsule = CollisionCapsule((0,0,-1),(0,0,2),2)
+
+        self.HB = self.NP.attachNewNode(CollisionNode(f'{self.name}hb'))
+        self.HB.node().addSolid(capsule)
+
+        # self.HB.show()
+
+
+    def bulletsetup(self, number ):
+       
+
+        for x in range (number):
+            bullet = Bullet(self.emitter, self.worldNP,f'bullet{x}', self.orb,False, .5,20, self.emitter.getPos(render))
+
+            self.bullets.append(bullet)
+            print('setup pos',bullet.NP.getPos())
+
+        print('bullets,', self.bullets)
+
+
+    def bulletPatterns(self, t, pattern):
+        if pattern == 1:
+            self.emitter.setX(math.sin(t*2)* 2)
+        if pattern == 2:
+            self.emitter.setZ(math.sin(t*2)* 2)
+        if pattern == 3:
+            self.emitter.setX(math.sin(t*3))
+            self.emitter.setZ(math.cos(t*5))
+       
+        p = self.emitter.getPos()
         
-        current = orb.getY(render)
-        orb.setY(current + 1)
-      
 
-    def spawn(self):
-            self.model.reparentTo(self.NP)
+    def fire(self):
+        "goes thru self.bullets and shoots them"
+        for bullet in self.bullets:
+            # while bullet.active == True:
+            #     continue
+            if bullet.active == True:
+                # print(bullet.name, 'is active')
+                continue
+            else:      
+                bullet.shoot()
+                # print('firing', bullet.name)
+                return
+    def spawnSeq(self):
+        self.NP.setPos(self.pos)
+        self.active = True
+        self.model.reparentTo(self.NP)
+        self.model.setPos(0,0,-2)
+
+        sp = LerpPosInterval(self.model, 2, (0,0,-2),(0,0,-10))
+        def spawnin():
+            self.isSpawning = True
+        def spawnout():
+            self.isSpawning = False
+        s=Func(spawnin)
+        e=Func(spawnout)
+        spawn = Sequence(s,sp,e).start()
+    def dieSeq(self):
+        self.active = False
+        sp = LerpPosInterval(self.model, 2, (0,0,-10),(0,0,-2))
+        def tp():
+            self.NP.setPos((self.initpos))
+            self.active = False
+        setpos = Func(tp)
+
+        die = Sequence(sp,setpos).start()
+
+    def meleeatk(self):
+        # print('atack')
         
+        
+        def clear(node):
+            node.node().clearSolids()
+            # self.attached = False
+        def end():
+            self.isAttacking = False
 
-    def update(self):
-        self.shoot(self.orb)
-        # processaction={
-        #                     'idle': self.idleTurret,
-                           
-        #                     'melee': self.processAttack, 
-                          
-        #                     'stunned': self.isStunned,
-                      
-                          
-        #     }
+        rightarm = Func(self.atkhb, self.forearmR, CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3), self.atkNodeR)
+        leftarm = Func(self.atkhb, self.forearmL, CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3),self.atkNodeL)
+        a1 = self.model.actorInterval('atk1')
+        a2 = self.model.actorInterval('atk2')
+        clearL = Func(clear, self.atkNodeL)
+        clearR = Func(clear, self.atkNodeR)
+        send = Func(end)
+
+
+        self.atkseq = Sequence(Parallel(a1,leftarm),clearL,Parallel(rightarm, a2), clearR,send)
+        self.atkseq.start()
+
+    def atkhb(self,parent,shape,node ):
+        # if self.attached == True:
+        #     return
+        # self.blade = self.model.expose_joint(None, 'modelRoot', 'blade')
+        # self.attached=True
+        # self.atkNode = NodePath(CollisionNode(f'{self.name}attack'))
+        # HitB = CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3)
+        node.reparentTo(parent)
+        node.node().addSolid(shape)
+        node.show()
+ 
+    def staggered(self):
+        #play anim thru thenm return
+        if self.anim!='staggered':
+            saelf.model.play('staggered')
+    def update(self, dt, et):
+        # print('turret dt', dt)
+        # print('turret elapsed time', et)
+        if self.isSpawning == True:
+            return
+        for x in self.bullets:
+                if x.active == False:
+                    x.NP.setPos(self.emitter.getPos(render))
+                    x.NP.setH(self.model.getH(render))                
+                if x.active == True:
+                    x.processShooting(dt)
+        self.d2p = (self.NP.getPos(render) - self.lookTarget).length()
+        # print('turret d2p', self.d2p)
+        if self.d2p<7:
+            if self.isAttacking == False:
+                self.meleeatk()
+                print('attached?', self.attached)
+            
+        if self.d2p > 10: #shooty shooty
+            self.bulletPatterns(et, 1)
+
+
+            inactive_bullets = []
+            active_bullets = []
+            # print('dhdh', et%6)
+            # if round((et%.3) * 100) == 1:
+            if round((et*100) % 60) == 1:
+                # print('shooty buyllet', round((et%.6) * 100))
+                self.fire()
+
+            # if self.health <1:
+        
+            #     self.healthbar.setHealth(self.health)
+                # print('all bullets', self.bullets)
+
+            #     inactive_bullets = [b for b, active in self.bullets.items() if not active]
+            #     print("INACTIVE", inactive_bullets)
+            #     if inactive_bullets:
+            #         self.shoot(inactive_bullets[0])
+            # print('turretpos', self.NP.getPos(render), 'vulletpos', self.bullets[0].NP.getPos(render), self.bullets[0].active)
+            # if self.bullets[0].active == False:
+            #     self.bullets[0].shoot()
+
+            # for bullets in [b for b, active in self.bullets.items() if active]:
+            #     self.processShooting(bullets, dt) 
+                # for bullet in inactive_bullets:
+                #     print("INACTIVE BULLET", bullet)
+                #     self.shoot(bullet,dt)
+            # processaction={
+            #                     'idle': self.idleTurret,
+
+            #                     'melee': self.processAttack, 
+
+            #                     'stunned': self.isStunned,
+
+
+            #     }
         anim = self.model.getCurrentAnim()
         if anim!='idle':
             self.model.loop('idle')
-        self.NP.lookAt(self.lookTarget)
 
+        self.tracktarget()
+class Bullet():
+    def __init__(self,worldNP, parentNode, name, model, active,radius, speed,initpos ):
+        self.worldNP = worldNP
+        # self.parentNode = parentNode
+        self.inactivePos = initpos
+        self.name = name
+        self.parentNode = parentNode
+        self.speed = speed
+
+        self.NP = parentNode.attachNewNode(name)
+        model.instanceTo(self.NP)
+        self.active = active
+        self.cNP = self.NP.attachNewNode(CollisionNode(f'{name}HB'))
+        #cNP.setCollideMask(BitMask32.allOn())
+        frommask = BitMask32(0x1)
+        intomask = BitMask32(0x2)
+        # cNP.setFromCollideMask(BitMask32(0x1))
+        # cNP.setIntoCollideMask(BitMask32(0x2))
+        self.sphere = CollisionSphere(0,0,0, radius)
+        self.HBattached = False   
+        
+        self.NP.setPos(render, self.inactivePos)
+        print('inactive pos', self.inactivePos)
+    
+    def attachHB(self):
+        self.cNP.node().addSolid(self.sphere) 
+        self.HBattached = True   
+        self.cNP.show()
+
+
+    def shoot(self):
+        # print('oh shoot')
+        self.NP.reparentTo(render)
+        # self.NP.setH(self.parentNode.getH())
+        if self.active ==True:
+            # print('bullet already active')
+            return
+        self.active =True
+        if self.HBattached == False:
+            self.attachHB()
+
+    def processShooting(self, t):
+        # forward = render.getRelativeVector( self.NP, Vec3(0,10,0))
+
+        self.NP.setY(self.NP, t * self.speed)
+        # self.NP.setY(t * forward.y)
+        # print(self.NP.getPos(render), self.parentNode.getPos(render))
+        # print('shooting', self.name, self.NP.getPos(), self.NP.getPos(render))
+        return
+    def hit(self):
+        """bullet explodes and resets"""
+        
+        self.cNP.node().clearSolids()
+        # print('clear solid')
+
+        self.HBattached = False
+
+        self.NP.reparentTo(self.parentNode)
+        self.NP.setPos(self.parentNode, (0,0,0))
+        
+        print('hit - reset', self.NP.getPos(render), self.inactivePos)
+        self.active = False
+        # return
 class Enemy():
-    def __init__(self, world, parentnode, actor, startpos,posture,hbshader,spawnpoint,initState, type, name ):
+    def __init__(self, world, parentnode, actor, startpos,posture,
+                hbshader,spawnpoint,initState, type, name ):
         self.active = False
         self.health = .01
         self.chargeAMT = 0.98
@@ -153,7 +387,8 @@ class Enemy():
         self.healthbar.setCompass(base.camera)
         self.healthbar.reparentTo(self.NP)
         self.healthbar.setZ(3)
-        
+        self.healthpos = self.NP.attachNewNode('healthbarpos')
+        # self.healthpos.setZ(3)
 
 
         # self.hb(name)
@@ -172,8 +407,9 @@ class Enemy():
         # print('posture', self.posture,'attackiing?', self.isAttacking)
         # if self.active == False:
         #     return\
-
+        # print('my pisture', self.name, self.posture, 'hashiu', self.hasHit)
         #finisher check
+        # self.healthbar.setPos(self.NP.getPos())
         if self.posture<=0: #and self.inRange == True:
             # self.finishMe = True
             self.currentBehavior = 'stunned'
@@ -222,13 +458,13 @@ class Enemy():
         if self.active ==True and self.currentBehavior!=None:
             processaction[self.currentBehavior]()
 ########healthbar update
-        self.healthbar.setPosture(self.posture)
+        # self.healthbar.setPosture(self.posture)
         if self.health <1:
         
             self.healthbar.setHealth(self.health)
         
-        if self.posture>.01:
-            self.resetPosture()
+        # if self.posture>.01:
+        #     self.resetPosture()
         self.controller.setLinearMovement(self.speed, False)
         return #task.cont
     def randomizebehavior(self):#, task):
@@ -250,10 +486,11 @@ class Enemy():
         
     def resetPosture(self):
         #change this to descreete values
-        self.posture -=.001
-        if self.posture > 1:
-            self.posture = 0.999
-            print('stun!')
+        self.posture = 2
+        # self.posture -=.001
+        # if self.posture > 1:
+        #     self.posture = 0.999
+        #     print('stun!')
 
     # def die(self):
     #     print('dead')
@@ -302,8 +539,10 @@ class Enemy():
             self.isAttacking=False
             self.hasHit = False
             
+            
             if self.atkorder>=limit:# wensures that each attack is 2 attacks
                 self.atkorder=0
+                self.resetPosture()
                 # self.currentBehavior = None
 
         atta = Func(attach)
@@ -432,10 +671,17 @@ class Enemy():
     def chargeHP(self):
         """when enemies spawn in, they charge up their hp. they each have a different starting threshold before theyh become active"""
         print('charging up')
-        # chargeseq = Sequence()
+        # chargeseq = Sequence() 
         pass
     def isStunned(self):
         print(self.name, 'is stuned!')
-        if self.d2p<5:
-            self.finishMe = True
+        if self.anim!='staggered':
+            self.model.play('staggered')
+        # print('stagerframe',self.frame)
+        if self.frame!=None:
+            if self.frame >=40:
+                self.randomizebehavior()
+        #need to exit out after some tim e
+        # if self.d2p<5:
+        #     self.finishMe = True
         return

@@ -423,6 +423,7 @@ class Events:
         def deflected(self, anim, enemy): #control enemie's recoil anim here too
             """event for when u succesfully deflect enemy- enemy loses one posture point and player recoils"""
             print('deflect!')
+            enemy.atkNode.node().clearSolids()
             if self.player.animseq is not None:#end attack anim sequence
                 if self.player.animseq.isPlaying():
                         self.player.animseq.pause()
@@ -634,6 +635,8 @@ class Events:
             # 2move player to enemy pos
             #3play both enemy/player anims
             #4 kill enemy
+            def start():
+                self.character.movementState = "finisher"
             def exit():
                 self.player.character.movementState = 'endaction'
             x = self.charM.getX(render) - enemy.model.getX()
@@ -643,14 +646,14 @@ class Events:
             angle = math.degrees(h) 
 
         # self.closest = closest
-            self.charM.setH(render, angle)
+            self.charM.setH(render, -angle)
 
 
             print('finisher')
             # self.charM.setH(-(enemy.model.getH(render)))
             # self.character.movementParent.setPos(enemy, 0,-1,0)
             point = render.getRelativePoint(enemy.model, (0,3,0))
-            self.character.movementState = "finisher"
+            
             move2enemy =Parallel(LerpPosInterval(self.character.movementParent, .2, point))#,
                                                 # LerpPosInterval(self.camtarg, .5, point),
                                                 # LerpHprInterval(self.player.charM, .5, point))
@@ -658,13 +661,17 @@ class Events:
             playeranim = self.charM.actorInterval(animName='finisher',loop = 0, startFrame=0, endFrame = 40)
             enemyanim = enemy.model.actorInterval(animName='finished',loop = 0, startFrame=0, endFrame = 40)
 
+            start = Func(start)
             die = Func(self.enemydeath, enemy)
             fin = Func(exit)
             # en
-            s = Sequence(Parallel(move2enemy,pose),
+            # if self.finisherSeq== None:
+
+            s = Sequence(start, Parallel(move2enemy,pose),
                         Parallel(playeranim,enemyanim),
                         die, fin
-                        ).start()
+                        )
+            s.start()
             #sequence= do anim, dodge/jump in direction
         # def doDodge(self, air=False):
         #     if air==False:
@@ -677,6 +684,18 @@ class Events:
         def finisherCheck(self):
             """if enemy is stunned, do finisher on it. if multiple enemies are stunned, see which is the closest """
             print('checking for finisher')
+            targetenemy = None
+            stunneds = []
+            for enemy in self.enemies:
+                if enemy.currentBehavior == 'stunned':
+                    stunneds.append(enemy)
+                    # print(min(stunneds, key=lambda e: e.d2p))
+                    e = min(stunneds, key=lambda e: e.d2p)
+                    self.finisher(e)
+                    return
+            else:
+                print('no one 2 finish')
+                pass    
         def takeDamage(self):
             """event when player takes damage and doesnt have super armor"""
             return

@@ -15,7 +15,7 @@ class Player(Anims,Actions, Fx):
         # if self.state == 'OF':
         self.health = .99
         self.isStunned = False
-        self.plotArmour = 1 # 1 for testing
+        self.plotArmour = 0 # 1 for testing
 
         self.setupOF()
         # self.charM = self.character.char # the model - need to switch between on foot and mech
@@ -198,11 +198,43 @@ class Player(Anims,Actions, Fx):
             # print('char hb', self.characterHB)
             #hb for perfect dodge
             self.hb(self.charM,self.pdodgecheck,shape=CollisionCapsule(0,0,0,0,0,3,1.2),visible=False)
+    def addSolids(self):
+        """puts collision solids back into player"""
+            
+        
+        # self.headHB = self.head.attachNewNode(CollisionNode('playerhead'))
+        headHB = CollisionSphere(0,0,0, .1)
+        chestHB= CollisionSphere(0,.2,0,.4)
+        arm =  CollisionCapsule((0,-.2,0),(0,.8,0),0.07)
+        leg =  CollisionCapsule((0,-.38,0),(0,1,0),0.1)
+        self.headHB.node().addSolid(headHB)
+        self.bicepR.node().addSolid(arm)
+        self.forarmR.node().addSolid(arm)
+        self.thighR.node().addSolid(leg)
+        self.shinR.node().addSolid(leg)
+        self.bicepL.node().addSolid(arm)
+        self.forarmL.node().addSolid(arm)
+        self.thighL.node().addSolid(leg)
+        self.shinL.node().addSolid(leg)
 
+    def iframes(self):
+        print('player is invu;nerable')
+        for node in self.HB:
+            node.node().clearSolids()
     def playerTask(self):#, task):
 
         if self.isStunned == True:
+            print('u AARE STUNNDE')
             return
+        if self.character.movementState == "finisher":
+            print('ifinfisher')
+            return
+        if self.character.movementState == "attacking":#cancel attack anims ig joystuick is true
+            if self.character.isAttacking==False:
+                if self.pauseframe==True:# or self.buffer == True:
+                    if self.leftjoystick==True:
+                        print('walk oput of atack')
+                        self.finish()
         if self.state == 'OF':
             self.updateAnimOF()
             if self.character.movementState == 'falling' and self.previousState == 'ground':

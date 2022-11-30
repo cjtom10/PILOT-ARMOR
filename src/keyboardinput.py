@@ -17,7 +17,7 @@ class KeyboardInput:
         self.accept('f1', self.wireframe)
 
         
-        self.accept('control', self.startFly)
+        
         self.accept('control-up', self.stopFly)
         
         inputState.watchWithModifiers('forward', 'w')

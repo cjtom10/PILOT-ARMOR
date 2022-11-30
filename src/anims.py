@@ -638,15 +638,15 @@ class Anims:
         
     # def cleanupdodge(self):
     
-    def dodgetrailfx(self):
+    def dodgetrailfx(self):#, dt):
         if self.dodgetimer==None:
             self.dodgetimer = taskMgr.add(self.timer,'dodgetimer')
 
         if self.character.state == 'mech':
             # print('mech Strail')
         
-            t=round(self.dodgetimer.time *10)
-            print('dodgbeframe', t)
+            # t=round(self.dodgetimer.time *10)
+            # print('dodgbeframe', t)
             fx = self.charM.instanceTo(self.mechFX)
             self.mechdodgefx[1].reparentTo(render)
             if self.FXset == False:
@@ -655,7 +655,10 @@ class Anims:
             # self.charM.pose()
             # fx.setPos(self.charM.getPos())
             # print('mech dodgetime:', self.dodgetimer.time)
+                    # if round((dt%.3) * 100) == 1:
+            # print('shooty buyllet', round((dt%.6) * 100))
             if self.dodgetimer.time>.5:
+            # if self.dt > .5:
                 taskMgr.remove('dodgetimer')
                 self.dodgetimer = None
                 self.finish()
@@ -670,8 +673,8 @@ class Anims:
                 self.dodgetrail[i].show()
         def cleartrail(i):
             self.dodgetrail[i].hide()
-            taskMgr.remove('dodgetimer')
-            self.dodgetimer=None
+            # taskMgr.remove('dodgetimer')
+            # self.dodgetimer=None
             self.FXset = False
 
         self.dodgetrailefect = True
@@ -1041,27 +1044,27 @@ class Anims:
         self.animseq = Sequence(self.deflectinterval,Parallel(atkingfalse,clear, pfalse),finish, fin)
         self.animseq.start()
 
-    def animGrind(self):
-        # if 'jump' not in self.animfilter[self.anim]:
-        #     return
-        if(self.anim!='grind'):
-            self.charM.setPlayRate(1, "grind")
-            self.charM.play('grind')
-        leftfoot = self.charM.expose_joint(None, 'modelRoot', 'heelik.L')
-        rightfoot = self.charM.expose_joint(None, 'modelRoot', 'heelik.R')
-        hip = self.charM.expose_joint(None, 'modelRoot', 'pelvis')
-        hip.setHpr(render,(0,0,0))
-        # leftfoot.setZ(5)
-    def scarfSetup(self):
-        info = self.world.getWorldInfo()
+    # def animGrind(self):
+    #     # if 'jump' not in self.animfilter[self.anim]:
+    #     #     return
+    #     if(self.anim!='grind'):
+    #         self.charM.setPlayRate(1, "grind")
+    #         self.charM.play('grind')
+    #     leftfoot = self.charM.expose_joint(None, 'modelRoot', 'heelik.L')
+    #     rightfoot = self.charM.expose_joint(None, 'modelRoot', 'heelik.R')
+    #     hip = self.charM.expose_joint(None, 'modelRoot', 'pelvis')
+    #     hip.setHpr(render,(0,0,0))
+    #     # leftfoot.setZ(5)
+    # def scarfSetup(self):
+    #     info = self.world.getWorldInfo()
         
-        info.setGravity(-9)
-        info.setAirDensity(50000)
-        info.setWaterDensity(0)
-        info.setWaterOffset(10)
-        info.setWaterNormal(Vec3(0, 0, -1))
+    #     info.setGravity(-9)
+    #     info.setAirDensity(50000)
+    #     info.setWaterDensity(0)
+    #     info.setWaterOffset(10)
+    #     info.setWaterNormal(Vec3(0, 0, -1))
 
-        self.arm = self.charM.expose_joint(None, 'modelRoot', 'bicep.R')
+    #     self.arm = self.charM.expose_joint(None, 'modelRoot', 'bicep.R')
         # self.pin = NodePath(BulletRigidBodyNode('pin')) 
         
         # self.pin.setPos(self.arm.getPos())

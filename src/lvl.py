@@ -23,8 +23,8 @@ class Level:#makd this a separate object
                 base.setBackgroundColor(0,0,0)
                 skybox.reparentTo(base.camera)
                 skybox.setCompass()
-                # mtn1pos = skybox.find('mtn1').getPos()
-                # mtn2 = render.attachNewNode('mtn2')
+
+
                 
                 # mtn = loader.loadModel('../models/mtn.glb')
                 # mtn.setPos(mtn1pos)
@@ -47,7 +47,7 @@ class Level:#makd this a separate object
                 # mtn.setPos(-20, 10, -55)
                 # rok.rehparentTo(render)
           
-                self.grindseq = Sequence()
+                # self.grindseq = Sequence()
         
 
 #light setup
@@ -84,21 +84,39 @@ class Level:#makd this a separate object
 
 ##end light setup
                 # self.shader = Shader.load(Shader.SL_GLSL, "../shaders/vert.vert", "../shaders/frag.frag")
-                
 
-
-
-
-                self.arena = loader.loadModel('../models/lvl/arena.glb')
+                self.arena = NodePath('arena')
+                self.arenaOF = loader.loadModel('../models/lvl/arenav2.glb')
+                self.arenaOF.reparentTo(self.arena)
                 self.arena.reparentTo(NP)
-                
+                self.arena.setCollideMask(BitMask32.allOn())
+                # print('arena geoms', self.arenaOF.getGeoms())
+                self.arena.ls()
+                # self.arena = loader.loadModel('../models/lvl/arenaMECH.glb')
+
+                self.geomcount = 6 #used for making tris and generationg collisions w arena
+                for i in range(self.geomcount):
+                        self.findTris(f'tri{i}',self.arenaOF)
+
+                # for i in range(12):# mech arena - 12 tris on foot - 7
+                #         self.findTris(f'tri{i}',self.arena)
+                #arena sensor for camera
+                # for i in range(2, 1):
+                # arenasensors = loader.loadModel('../models/lvl/arenaOFsensors.glb')
+                # box = BulletBoxShape(Vec3(72, 92, 22))
+                # self.sensor1 = self.NP.attachNewNode(BulletGhostNode('arenasensor1'))
+                # self.sensor1.node().addShape(box)
+                # self.sensor1.setPos(arenasensors.find('sensor1').getPos(render))
+                # self.sensor1.setCollideMask(BitMask32(0x10))
+                # self.world.attachGhost(self.sensor1.node())
+                # self.sensor2 = self.NP.attachNewNode(BulletGhostNode('arenasensor2'))
+                # self.sensor2.node().addShape(box)
+                # self.sensor2.setPos(arenasensors.find('sensor2').getPos(render))
+                # self.sensor2.setCollideMask(BitMask32(0x10))
+                # self.world.attachGhost(self.sensor2.node())
 
 
-                for i in range(3):
-                        self.findTris(f'tri{i}',self.arena)
-                # self.findTris(f'tri1',self.arena)
-                        
-                self.enemyPos()
+                self.emptyPos(self.arenaOF)
                 self.spawnNo = 0
 
                 # rock = loader.loadModel('../models/rock1.glb')
@@ -111,19 +129,29 @@ class Level:#makd this a separate object
                 self.groundNP.setCollideMask(BitMask32.allOn())
 
                 self.world.attachRigidBody(self.groundNP.node())
-
+        def arenaSensorcheck(self, sensor):
+                ghost = sensor.node()
+                print(ghost.getNumOverlappingNodes())
+                # for node in ghost.getOverlappingNodes():
+                #         print(node)
+                if 'BulletCharacterControllerNode' in ghost.getOverlappingNodes():
+                        print('im in')
+        def switchArena(self):
+                return
         
-        def enemyPos(self):
+        def emptyPos(self, lvl):
                 """includes positions for inactive enemies as well as enemy spawn points TODO add spawn pooints"""
+                # self.playerSpawn = (0,0,0) # onfoot spawn
+
                 self.inactiveenemypos = [] 
                 self.enemyspawnpoints = []
                 self.turretPos = []
                 for i in range(5):
-                        self.turretPos.append(self.arena.find(f'turretpos{i}').getPos(render))
+                        self.turretPos.append(lvl.find(f'turretpos{i}').getPos(render))
+                for i in range(8):
+                        self.inactiveenemypos.append(lvl.find(f'enemypos{i}').getPos(render))   
                 for i in range(3):
-                        self.inactiveenemypos.append(self.arena.find(f'enemypos{i}').getPos(render))   
-                for i in range(3):
-                        self.enemyspawnpoints.append(self.arena.find(f'enemySpawn{i}').getPos(render))
+                        self.enemyspawnpoints.append(lvl.find(f'enemySpawn{i}').getPos(render))
 
         def make_collision_from_model(self, input_model, node_number, mass, world, target_pos):
             # tristrip generation from static models
@@ -168,20 +196,20 @@ class Level:#makd this a separate object
                 np.setH(180)
                 self.world.attachRigidBody(np.node())
                           
-        def levelunit(self, geom,shape, pos):
-                ##load model and create collision shape independent of moedl
+        # def levelunit(self, geom,shape, pos):
+        #         ##load model and create collision shape independent of moedl
 
-                geom.reparentTo(NP)
-                geom.setPos(pos)
-                collisionposition = geom.find('collisionposition')
+        #         geom.reparentTo(NP)
+        #         geom.setPos(pos)
+        #         collisionposition = geom.find('collisionposition')
 
-                np = self.NP.attachNewNode(BulletRigidBodyNode('lvlunit'))
-                np.node().addShape(shape)
-                mask = BitMask32.bit(0) | BitMask32.bit(2)
-                # np.setCollideMask(BitMask32.allOn())
-                np.setCollideMask(mask)
-                self.world.attachRigidBody(np.node())
-                np.setPos(collisionposition.getPos())
+        #         np = self.NP.attachNewNode(BulletRigidBodyNode('lvlunit'))
+        #         np.node().addShape(shape)
+        #         mask = BitMask32.bit(0) | BitMask32.bit(2)
+        #         # np.setCollideMask(BitMask32.allOn())
+        #         np.setCollideMask(mask)
+        #         self.world.attachRigidBody(np.node())
+        #         np.setPos(collisionposition.getPos())
 
         # # Ground
                 #create grindrail
@@ -615,7 +643,8 @@ class HealthBar(NodePath):
     def __init__(self, pos):
         NodePath.__init__(self, 'healthbar')
 
-        self.postureBar(pos = (-1,1,0.6, .8))
+
+        # self.postureBar(pos = (-1,1,0.6, .8))
 
         self.setShaderAuto()
         cmfg = CardMaker('fg')
@@ -633,11 +662,26 @@ class HealthBar(NodePath):
         self.bg.setColor(0.5, 0.5, 0.5, 1)
 
         self.setHealth(1.0)#, full = True)
-        self.setPosture(0.0001)
+        # self.setPosture(0.0001)
         # self.set_depth_write(False)
         # self.set_depth_test(False)
         # self.setCompass(base.camera)
-    def postureBar(self, pos):
+#     def postureBar(self, pos):
+#         p1 = CardMaker('pos1`')
+#         p1.setFrame(pos)
+#         self.posture1=self.attachNewNode(p1.generate())
+#         self.posture1.setColor(0, 0.5, 1, 1)
+
+#         p2 = CardMaker('pos2`')
+#         p2.setFrame(pos)
+#         self.posture2=self.attachNewNode(p2.generate())
+#         self.posture2.setPos(1, 0, 0)
+#         self.posture2.setColor(0.5, 0.5, 0.5, 1)
+
+#         self.posture1.setColor(1, 0.5, 0, 1)
+#         self.posture2.setColor(0.5, 0.5, 0.5, 1)
+
+    def PAgauge(self, pos):        
         p1 = CardMaker('pos1`')
         p1.setFrame(pos)
         self.posture1=self.attachNewNode(p1.generate())
@@ -668,20 +712,20 @@ class HealthBar(NodePath):
         self.bg.setPos(1-offset,0,0)
         
         #         self.bg.setScale(1.0 - value, 1, 1)
-    def setPosture(self, value, posturecount = 3):
-        ## Should be divided into enemy's posture count
-        # if value ==1:
-        #         value =.999
-        # if value ==0:
-        #         value =.001
-        # offset = 1.0-value
-        offset = (posturecount - value) / posturecount
+#     def setPosture(self, value, posturecount = 3):
+#         ## Should be divided into enemy's posture count
+#         # if value ==1:
+#         #         value =.999
+#         # if value ==0:
+#         #         value =.001
+#         # offset = 1.0-value
+#         offset = (posturecount - value) / posturecount
 
-        self.posture1.setScale(value, 1, 1)
-        self.posture2.setScale(1.0-value, 1, 1)
+#         self.posture1.setScale(value, 1, 1)
+#         self.posture2.setScale(1.0-value, 1, 1)
 
-        self.posture1.setPos(-offset,0,0)
-        self.posture2.setPos(1-offset,0,0)
+#         self.posture1.setPos(-offset,0,0)
+#         self.posture2.setPos(1-offset,0,0)
 
 
 
