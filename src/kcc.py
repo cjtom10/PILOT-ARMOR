@@ -194,6 +194,7 @@ class PandaBulletCharacterController(object):
                           'r4' : '../models/player/char_runkey4.bam',
                           'takehit' : '../models/player/char_takedamage1.bam',
                           'finisher' : '../models/player/char_finisher.bam',
+                          'death' : '../models/player/char_die.bam'
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
         self.mech = Actor('../models/player/mech.bam', {
@@ -850,7 +851,8 @@ class PandaBulletCharacterController(object):
                 if self.state == "OF":
                     atkVec = self.char.getQuat().getForward() * 2
                 if self.state == "mech":
-                    atkVec = self.__crouchCapsuleNP.getQuat().getForward() * 15
+                    # atkVec = self.__crouchCapsuleNP.getQuat().getForward() * 15
+                    atkVec = self.mechVec * 2
                     # self.mech.setH(self.movementParent, 0)
                 # print('attackvec', )
             # print(atkVec)

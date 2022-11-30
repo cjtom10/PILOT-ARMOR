@@ -700,3 +700,11 @@ class Events:
             """event when player takes damage and doesnt have super armor"""
             return
             #if you dont have super armor,  end attack and staggert    # print('dodge')
+
+    
+        def observePA(self):
+            #looks at mech n show text
+
+            self.dialogue.setText('Experimental Pilot armor unit\n Has yet to have been piloted\n as 0.0005% of humans can withstand the\n neural grafting procedure ')
+
+            

@@ -782,3 +782,9 @@ class Actions:
             self.stunseq = Sequence(Parallel(s1, stun, iframes), 
                                     Parallel(end, stun))
             self.stunseq.start()
+
+
+        def death(self):
+            self.dead = True
+            if self.anim!='death':
+                self.charM.play('death')

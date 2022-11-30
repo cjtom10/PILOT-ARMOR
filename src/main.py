@@ -820,7 +820,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def update(self, task):
         """Updates the character and listens for joystick-activated events"""
-
+        
+        def point():
+            return
         #check for bullets hitting the arena
         # for entry in self.collqueue.entries:
         #     # print(entry.getFromNodePath().name)
