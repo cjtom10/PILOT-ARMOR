@@ -140,7 +140,6 @@ class Turret():
         e=Func(spawnout)
         spawn = Sequence(s,sp,e).start()
     def dieSeq(self):
-        self.active = False
         sp = LerpPosInterval(self.model, 2, (0,0,-10),(0,0,-2))
         def tp():
             self.NP.setPos((self.initpos))
