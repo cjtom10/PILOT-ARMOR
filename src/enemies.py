@@ -215,7 +215,7 @@ class Turret():
             active_bullets = []
             # print('dhdh', et%6)
             # if round((et%.3) * 100) == 1:
-            if round((et*100) % 60) == 1:
+            if round(et*100) % 60 == 1:
                 # print('shooty buyllet', round((et%.6) * 100))
                 self.fire()
 
