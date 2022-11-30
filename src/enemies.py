@@ -202,7 +202,6 @@ class Turret():
         if self.d2p<7:
             if self.isAttacking == False:
                 self.meleeatk()
-                print('attached?', self.attached)
             
         if self.d2p > 10: #shooty shooty
             self.bulletPatterns(et, 1)

@@ -195,8 +195,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.position1 = None
 
         self.nextTurretPos = 0
-        self.turretPosQueue = collections.deque()
-        self.occupiedTurretPos = set()
+        self.occupiedTurretPos = {}
         # HACK: starts at 3, then on switch2mech, unlocks the upper level spawnpoints
         self.numTurretPos = 3
 
@@ -221,9 +220,6 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # taskMgr.add(self.updateAnim, 'animtask')
         taskMgr.add(self.debugOSDUpdater, "update OSD")
         taskMgr.doMethodLater(2, self.spawnEnemy, 'spawn enemies')
-
-        self.spawnTurret(self.turret1)
-        self.spawnTurret(self.turret2)
 
         # self.isIdle=False
         # self.isWalking = False
@@ -1119,7 +1115,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # frametime = globalClock.getFrameTime()
         for turret in self.turrets:
             turret.update(turretDT,et)
-            if turret.active == False:
+            if not turret.active:
                 self.spawnTurret(turret)
      #-0------for testing purposes-------\
      # need to mkae this update AUTomticallly
@@ -1462,19 +1458,16 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             return task.again
         
         #teleport enemies from inactive to active, plays spawn animation
-    def spawnTurret(self, turret, pos):
+    def spawnTurret(self, turret):
         #update the spawn pos
         turret.health = .99
         
         # TODO: refactor into a class
         i = self.nextTurretPos
-        while i in self.occupiedTurretPos:
+        occupied = set(self.occupiedTurretPos.values())
+        while i in occupied:
             i = (i + 1) % self.numTurretPos
-        self.turretPosQueue.append(i)
-        if len(self.turretPosQueue) > len(self.turrets):
-            val = self.turretPosQueue.popleft()
-            self.occupiedTurretPos.remove(val)
-        self.occupiedTurretPos.add(i)
+        self.occupiedTurretPos[turret.name] = i
         self.nextTurretPos = i
         turret.pos = self.lvl.turretPos[self.nextTurretPos]
         turret.spawnSeq()
