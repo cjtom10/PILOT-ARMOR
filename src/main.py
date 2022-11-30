@@ -177,16 +177,16 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
         
         
-        hudmo = loader.loadModel('../models/hudBlank.glb')
-        hudmo.reparentTo(render2d)
-        hudmo.setShader(self.shader)
-        hudmo.setTransparency(TransparencyAttrib.MAlpha)
-        # self.playerhealth.reparentTo(render2d)
-        # self.PAgauge.reparentTo(render2d)
-        hudmo.setZ(.85)
-        
-        hudmo.setX(-.57)
-        hudmo.setScale(.5,0,0)
+        # hudmo = loader.loadModel('../models/hudBlank.glb')
+        # hudmo.reparentTo(render2d)
+        # hudmo.setShader(self.shader)
+        # hudmo.setTransparency(TransparencyAttrib.MAlpha)
+        # # self.playerhealth.reparentTo(render2d)
+        # # self.PAgauge.reparentTo(render2d)
+        # hudmo.setZ(.85)
+        # 
+        # hudmo.setX(-.57)
+        # hudmo.setScale(.5,0,0)
         # hudmo.setScale(.2)
 
         ml.resolveMouse()

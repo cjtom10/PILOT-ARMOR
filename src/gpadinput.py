@@ -62,8 +62,10 @@ class GamepadInput:
 
         # self.gamepad = base.devices.getDevices(InputDevice.DeviceClass.gamepad)[0]
         # Abut = self.gamepad.findButton("rstick")
-        self.trigger_l = self.gamepad.findAxis(InputDevice.Axis.left_trigger)
-        self.trigger_r = self.gamepad.findAxis(InputDevice.Axis.right_trigger)
+        self.trigger_l = self.trigger_r = 0
+        if self.gamepad:
+            self.trigger_l = self.gamepad.findAxis(InputDevice.Axis.left_trigger)
+            self.trigger_r = self.gamepad.findAxis(InputDevice.Axis.right_trigger)
         
         # self.left_x = self.gamepad.findAxis(InputDevice.Axis.left_x) 
         # self.left_y = self.gamepad.findAxis(InputDevice.Axis.left_y) 

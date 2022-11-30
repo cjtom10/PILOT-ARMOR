@@ -40,6 +40,8 @@ class Player(Anims,Actions, Fx):
         self.wallJumpEnabled = False
         self.wallruncam=False
 
+        self.leftValue = self.rightValue = 0
+
 
         #init hitboxes
         # self.charhitbox(self.charM, self.character.HB, True,'player')

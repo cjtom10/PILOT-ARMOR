@@ -17,6 +17,7 @@ class KeyboardInput:
         self.accept('f1', self.wireframe)
 
         
+        self.accept('e', self.actionX)
         
         self.accept('control-up', self.stopFly)
         
@@ -24,8 +25,8 @@ class KeyboardInput:
         inputState.watchWithModifiers('left', 'a')
         inputState.watchWithModifiers('reverse', 's')
         inputState.watchWithModifiers('right', 'd')
-        inputState.watchWithModifiers('turnLeft', 'q')
-        inputState.watchWithModifiers('turnRight', 'e')
+        # inputState.watchWithModifiers('turnLeft', 'q')
+        # inputState.watchWithModifiers('turnRight', 'e')
         
         # inputState.watchWithModifiers('run', 'shift')
         # inputState.watchWithModifiers('jump', 'space')
