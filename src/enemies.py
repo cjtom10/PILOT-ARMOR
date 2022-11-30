@@ -155,7 +155,7 @@ class Turret():
 
     def meleeatk(self):
         # print('atack')
-        
+        self.isAttacking = True
         
         def clear(node):
             node.node().clearSolids()
@@ -172,7 +172,7 @@ class Turret():
         send = Func(end)
 
 
-        self.atkseq = Sequence(Parallel(a1,leftarm),clearL,Parallel(rightarm, a2), clearR,send)
+        self.atkseq = Sequence(Parallel(leftarm, a1),clearL,Parallel(rightarm, a2), clearR,send)
         self.atkseq.start()
 
     def atkhb(self,parent,shape,node ):
