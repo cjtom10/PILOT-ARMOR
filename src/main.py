@@ -375,6 +375,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # if turret.health<=0:
         #     # self.enemydeath(turret)
         #     turret.dieSeq()
+
         if turret.isHit==True:
             print(turret.NP.name,'is already hit')
             return
@@ -407,7 +408,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         e =Func(end)
         
         hitseq = Sequence(a, p, Wait(.1),b, r,e).start()
-        if turret.health<=0:
+        if turret.health<=0 and not turret.isDying:
             turret.dieSeq()
 
     def bullethitwall(self,bullet, entry):
@@ -1114,9 +1115,12 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         turretDT = globalClock.dt
         # frametime = globalClock.getFrameTime()
         for turret in self.turrets:
-            turret.update(turretDT,et)
+            if turret.isSpawning or turret.isDying:
+                continue
             if not turret.active:
                 self.spawnTurret(turret)
+                continue
+            turret.update(turretDT,et)
      #-0------for testing purposes-------\
      # need to mkae this update AUTomticallly
         # self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)

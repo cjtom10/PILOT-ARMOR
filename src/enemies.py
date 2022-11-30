@@ -44,6 +44,7 @@ class Turret():
         # self.healthbar.setZ(5)
         
         self.isSpawning = False
+        self.isDying = False
         self.isHit = False
 
         self.hbSetup()
@@ -140,13 +141,17 @@ class Turret():
         e=Func(spawnout)
         spawn = Sequence(s,sp,e).start()
     def dieSeq(self):
+        self.isDying = True
         sp = LerpPosInterval(self.model, 2, (0,0,-10),(0,0,-2))
         def tp():
             self.NP.setPos((self.initpos))
-            self.active = False
         setpos = Func(tp)
+        def finish_dying():
+            self.isDying = False
+            self.active = False
+        e = Func(finish_dying)
 
-        die = Sequence(sp,setpos).start()
+        die = Sequence(sp,setpos,e).start()
 
     def meleeatk(self):
         # print('atack')
