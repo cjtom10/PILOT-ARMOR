@@ -23,7 +23,8 @@ class Player(Anims,Actions, Fx):
         Fx.__init__(self)
         Anims.__init__(self)
         Actions.__init__(self)
-
+        
+        self.dead = False
         
         self.enemies = enemies
         self.player = None
@@ -224,7 +225,8 @@ class Player(Anims,Actions, Fx):
         for node in self.HB:
             node.node().clearSolids()
     def playerTask(self):#, task):
-
+        if self.dead == True:
+            return# duh
         if self.isStunned == True:
             print('u AARE STUNNDE')
             return

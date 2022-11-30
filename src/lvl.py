@@ -91,10 +91,15 @@ class Level:#makd this a separate object
                 self.arena.reparentTo(NP)
                 self.arena.setCollideMask(BitMask32.allOn())
                 # print('arena geoms', self.arenaOF.getGeoms())
+
+                # for events for observing/entering ppa
+                self.observePA = self.arenaOF.find('observepa')
+                self.enterPA = self.arenaOF.find('enterpa')
+
                 self.arena.ls()
                 # self.arena = loader.loadModel('../models/lvl/arenaMECH.glb')
 
-                self.geomcount = 6 #used for making tris and generationg collisions w arena
+                self.geomcount = 7 #used for making tris and generationg collisions w arena
                 for i in range(self.geomcount):
                         self.findTris(f'tri{i}',self.arenaOF)
 
