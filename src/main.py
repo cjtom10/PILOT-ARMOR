@@ -3,6 +3,7 @@ from enum import auto
 from multiprocessing.connection import wait
 from pickle import NONE
 from turtle import left, right
+from gltf.converter import collections
 from numpy import True_
 from panda3d.core import *
 from panda3d.bullet import *
@@ -193,7 +194,11 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
        
         self.position1 = None
 
-        self.nextTurretPos = 1
+        self.nextTurretPos = 0
+        self.turretPosQueue = collections.deque()
+        self.occupiedTurretPos = set()
+        # HACK: starts at 3, then on switch2mech, unlocks the upper level spawnpoints
+        self.numTurretPos = 3
 
         # self.accept('t',self.spawnEnemy,extraArgs= [self.dummy2])
         # base.camera.lookAt(self.turret1.NP)
@@ -217,8 +222,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         taskMgr.add(self.debugOSDUpdater, "update OSD")
         taskMgr.doMethodLater(2, self.spawnEnemy, 'spawn enemies')
 
-        self.spawnTurret(self.turret1,self.lvl.turretPos[0])
-        self.spawnTurret(self.turret2,self.lvl.turretPos[1])
+        self.spawnTurret(self.turret1)
+        self.spawnTurret(self.turret2)
 
         # self.isIdle=False
         # self.isWalking = False
@@ -408,7 +413,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         hitseq = Sequence(a, p, Wait(.1),b, r,e).start()
         if turret.health<=0:
             turret.dieSeq()
-            self.nextTurretPos+=1
+
     def bullethitwall(self,bullet, entry):
         # print(bullet.name, 'hits wall')
         # bullet.cNP.node().clearSolids()
@@ -640,6 +645,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.character.stopFly()
     def switch2mech(self):
         self.player.state = 'mech'
+        # HACK: add new viable turret positions
+        self.numTurretPos = 5
         self.player.setUpMech()
 ######Tasks here    
     def timer(self,  task):
@@ -654,7 +661,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.speed = Vec3(0,0,0)
         omega = 0.0
         
-        v = 5.0
+        v = 24.0
         vx = .50
         vy = .50
         vz = .5
@@ -1110,12 +1117,10 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         et = task.time
         turretDT = globalClock.dt
         # frametime = globalClock.getFrameTime()
-        # if self.activeTurret!=None:
-        #     self.activeTurret.update(turretDT, et)
-        for turrets in self.turrets:
-            turrets.update(turretDT,et)
-            if turrets.active ==False:
-                self.spawnTurret(turrets,self.lvl.turretPos[self.nextTurretPos] )
+        for turret in self.turrets:
+            turret.update(turretDT,et)
+            if turret.active == False:
+                self.spawnTurret(turret)
      #-0------for testing purposes-------\
      # need to mkae this update AUTomticallly
         # self.dummy2.moveTarget = self.enemyTargets[0].getPos(render)
@@ -1141,11 +1146,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
             if self.enemies:
                 for enemy in self.enemies:
                     enemy.lookTarget = playerpos
-            if self.activeTurret!=None:
-                for turret in self.turrets:
-                    turret.lookTarget = playerpos
-            # if self.activeTurret!=None:
-            #     self.activeTurret.lookTarget = playerpos
+            for turret in self.turrets:
+                turret.lookTarget = playerpos
                 
             # eif self.character.movementState!='dodging':
             #     self.dummy2.tracktarget()
@@ -1398,8 +1400,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.turret2 = Turret(self.world, self.worldNP, turret2, self.lvl.inactiveenemypos[4],self.lvl.turretPos[2], 'turret2')
 
         
-        self. activeTurret = self.turret1
-        self.turrets = []
+        self.turrets = [self.turret1, self.turret2]
         self.inactiveEnemies = []
         # self.enemies = []
         self.activeEnemiesPos = {}
@@ -1426,16 +1427,12 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.activeEnemiesPos.update({self.dummy2.NP:self.dummy2.NP.getPos()})
         self.activeEnemiesPos.update({self.dummy3.NP:self.dummy3.NP.getPos()})
 
-        self.turrets.append(self.turret1)
         # if self.activeEnemies:
         for enemy in self.enemies:
                 self.charhitbox(enemy.model, enemy.Hitbox,False, enemy.name)
                  
         taskMgr.add(self.updateEnemies, 'update enemies')
-    def turretspawnpoint(self, x):
-        # for x in range(len(self.lvl.turretPos))
-        # len(self.lvl.turretPos)%
-        self.nextTurretPos = x+1
+
     def spawnEnemy(self, task):
         
         print('spawn no:',self.lvl.spawnNo, len(self.enemies))
@@ -1468,9 +1465,18 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     def spawnTurret(self, turret, pos):
         #update the spawn pos
         turret.health = .99
-        self.lvl.turretPos[self.nextTurretPos%len(self.lvl.turretPos)]
-        print('next turret spawn pos', self.nextTurretPos)
-        turret.pos = pos
+        
+        # TODO: refactor into a class
+        i = self.nextTurretPos
+        while i in self.occupiedTurretPos:
+            i = (i + 1) % self.numTurretPos
+        self.turretPosQueue.append(i)
+        if len(self.turretPosQueue) > len(self.turrets):
+            val = self.turretPosQueue.popleft()
+            self.occupiedTurretPos.remove(val)
+        self.occupiedTurretPos.add(i)
+        self.nextTurretPos = i
+        turret.pos = self.lvl.turretPos[self.nextTurretPos]
         turret.spawnSeq()
 
     def enemydeath(self, enemy):
