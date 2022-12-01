@@ -15,7 +15,7 @@ class Player(Anims,Actions, Fx):
         # if self.state == 'OF':
         self.health = .99
         self.isStunned = False
-        self.plotArmour = 0 # 1 for testing
+        self.plotArmour =  0#1# for testing
 
         self.setupOF()
         # self.charM = self.character.char # the model - need to switch between on foot and mech
@@ -41,6 +41,7 @@ class Player(Anims,Actions, Fx):
         self.wallruncam=False
 
         self.leftValue = self.rightValue = 0
+        self.dead = False
 
 
         #init hitboxes
@@ -48,7 +49,7 @@ class Player(Anims,Actions, Fx):
             # def charhitbox(self, self.charM, HBlist,visible,name):
         """set up hitbox for taking damage"""
         # print(self.charM.listJoints())
-    def updatePlotarmor(x):
+    def updatePlotarmor(self, x):
         #need to add this to hud
         self.plotArmour += x
 
@@ -226,7 +227,7 @@ class Player(Anims,Actions, Fx):
     def playerTask(self):#, task):
 
         if self.isStunned == True:
-            print('u AARE STUNNDE')
+            # print('u AARE STUNNDE')
             return
         if self.character.movementState == "finisher":
             print('ifinfisher')

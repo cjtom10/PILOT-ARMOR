@@ -32,6 +32,8 @@ class Turret():
         world.attachCharacter(self.controller)
 
 
+        self.anim = self.model.getCurrentAnim()
+        self.frame = self.model.getCurrentFrame()
 
         self.active =False
 
@@ -46,6 +48,8 @@ class Turret():
         self.isSpawning = False
         self.isDying = False
         self.isHit = False
+        self.hasHit = False
+        self.isStunned = False
 
         self.hbSetup()
 
@@ -162,6 +166,7 @@ class Turret():
             # self.attached = False
         def end():
             self.isAttacking = False
+            self.hasHit=False
 
         rightarm = Func(self.atkhb, self.forearmR, CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3), self.atkNodeR)
         leftarm = Func(self.atkhb, self.forearmL, CollisionCapsule((0, 0, 0), (0, 2.5, 0), .3),self.atkNodeL)
@@ -186,13 +191,36 @@ class Turret():
         node.node().addSolid(shape)
         node.show()
  
-    def staggered(self):
+    def staggered(self,side):
         #play anim thru thenm return
-        if self.anim!='staggered':
-            saelf.model.play('staggered')
+        # self.s
+
+        self.isStunned = True
+        if self.atkseq.isPlaying():
+            self.atkseq.finish()
+        
+        print('staggere enemy on', side)
+        def end():
+
+            self.isStunned = False
+        e = Func(end)
+        # if self.anim!=f'staggered{side}':
+        #     self.model.play(f'staggered{side}')
+
+        anim = self.model.actorInterval(f'staggered{side}',startFrame=0, endFrame = 60)
+        staggerseq = Sequence(anim,e).start()
     def update(self, dt, et):
         # print('turret dt', dt)
         # print('turret elapsed time', et)
+        
+        self.anim = self.model.getCurrentAnim()
+        self.frame = self.model.getCurrentFrame()
+        
+        # if self.isStunned == True:
+        #     # if self.frame!=None:
+        #     #     if self.frame > 55:
+        #     #         self.isStunned = False
+        #     return
         if self.isSpawning == True:
             return
         for x in self.bullets:
@@ -210,12 +238,12 @@ class Turret():
         if self.d2p > 10: #shooty shooty
             self.bulletPatterns(et, 1)
 
-
             inactive_bullets = []
             active_bullets = []
-            # print('dhdh', et%6)
+            # print('dhdh', round(et*100) % 60)
             # if round((et%.3) * 100) == 1:
-            if round(et*100) % 60 == 1:
+            if round(et*100) % 60 == 0:
+                print('et', et)
                 # print('shooty buyllet', round((et%.6) * 100))
                 self.fire()
 

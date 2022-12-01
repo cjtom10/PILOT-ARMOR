@@ -194,6 +194,7 @@ class PandaBulletCharacterController(object):
                           'r4' : '../models/player/char_runkey4.bam',
                           'takehit' : '../models/player/char_takedamage1.bam',
                           'finisher' : '../models/player/char_finisher.bam',
+                          'die' : '../models/player/char_die.bam'
                         #   'airdodgeR' : '../models/char_airdodgeR.bam'                          
                           })
         self.mech = Actor('../models/player/mech.bam', {

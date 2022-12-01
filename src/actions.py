@@ -782,3 +782,12 @@ class Actions:
             self.stunseq = Sequence(Parallel(s1, stun, iframes), 
                                     Parallel(end, stun))
             self.stunseq.start()
+        def gainPlotArmor(self, value):
+            self.plotArmour += value
+            if self.plotArmour >1:
+                self.plotArmour = 1
+
+        def death(self):
+            self.dead = True 
+            if self.anim!='die':
+                self.charM.Play('die')

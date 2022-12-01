@@ -193,6 +193,10 @@ class Anims:
         # if self.character.movementState == "endaction":
         #      print('blend out')
         # print('current atk', self.currentAtk)
+        if self.dead == True:
+            if self.anim!='die':
+                self.charM.play('die')
+            return
         if self.isWalking == False:
             self.charM.setBlend(animBlend = False)
         if self.character.movementState == "dodging":
@@ -834,8 +838,8 @@ class Anims:
             
                 self.hb(parent=foot, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
             if self.character.state == "mech":
-                self.hb(parent=self.bladeL, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
-                self.hb(parent=self.bladeR, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 0, 0, .5))
+                self.hb(parent=self.bladeL, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 2, 0, 1))
+                self.hb(parent=self.bladeR, node = self.atkNode, shape=CollisionCapsule(0, .5, 0, 0, 2, 0, 1))
     def attackingFalse(self):
         self.character.isAttacking = False
     def parryFalse(self):
@@ -900,7 +904,7 @@ class Anims:
                             k4,
                             Func(self.atkstage, buffer = False, pause = False))
             self.animseq =Sequence(Parallel(k1, sound1, acceptQueue),
-                                  Parallel(sequinp2, atkfx, sound2), name=n)
+                                  Parallel(sequinp2, sound2), name=n)
                                 #   Func(self.atkstage, False, False)))
             self.animseq.start()
         if self.character.state == "OF":

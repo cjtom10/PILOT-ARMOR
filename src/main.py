@@ -149,7 +149,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.slash2sfx = loader.loadSfx('../sounds/slash1.wav')
         self.preKicksfx = loader.loadSfx('../sounds/prekick.wav')
         self.deflectsfx = loader.loadSfx('../sounds/deflect1.wav')
-
+        self.bg = loader.loadSfx('../sounds/pa2.wav')
+        self.bg.play()
 
               #2d display region for huyd
         dr = base.win.makeDisplayRegion()
@@ -176,8 +177,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.hudNP.setScale(0.07)
         self.hudNP.setPos(-1.5,0,-.8)
 
-        
-        
+        self.text =  TextNode('observePA')
+        self.textNP = aspect2d.attachNewNode(self.text)
+        self.textNP.setScale(.08)
+        self.textNP.setPos(-.9,0,-.6)
+        self.observing = False
+        self.observeRange = False
+        self.observe2 = False
         # hudmo = loader.loadModel('../models/hudBlank.glb')
         # hudmo.reparentTo(render2d)
         # hudmo.setShader(self.shader)
@@ -185,7 +191,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # # self.playerhealth.reparentTo(render2d)
         # # self.PAgauge.reparentTo(render2d)
         # hudmo.setZ(.85)
-        # 
+         
         # hudmo.setX(-.57)
         # hudmo.setScale(.5,0,0)
         # hudmo.setScale(.2)
@@ -299,21 +305,25 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                     self.accept(f'{bullet.cNP.name}-into-{bodypart.name}', self.getShot, extraArgs=[bodypart.name, bullet, 0.1])
 
             for turret in self.turrets:
-                self.accept(f'{turret.NP.name}attackL-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1])
-                self.accept(f'{turret.NP.name}attackR-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name, enemy, 0.1])
+                self.accept(f'{turret.NP.name}attackL-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name,turret, .15])
+                self.accept(f'{turret.NP.name}attackR-into-{bodypart.name}', self.takeHit, extraArgs=[bodypart.name,turret,.15])
+                
+                # self.accept(f'{turret.NP.name}attackL-into-parry', self.parryTurret, extraArgs=[turret, "R"])
+                # self.accept(f'{turret.NP.name}attackR-into-parry', self.parryTurret, extraArgs=[turret, "L"])
 ########enemy takesa hits
         for enemy in self.enemies:
             # if enemy.isHit==True:
             #         continue# disables multiple hits on single animation
             # else:    
+            self.accept(f'{enemy.NP.name}attack-into-parry', self.deflectcontact, extraArgs=[enemy])
             for bodypart in enemy.Hitbox: 
                 self.accept(f'attack-into-{bodypart.name}', self.hitEnemy, extraArgs=[enemy, bodypart.name]) #FIX should oinly takle one hit at a time
-                self.accept(f'parry-into-{enemy.NP.name}attack', self.deflectcontact, extraArgs=[enemy])
+                # self.accept(f'parry-into-{enemy.NP.name}attack', self.deflectcontact, extraArgs=[enemy])
 
         for turret in self.turrets:
             self.accept(f'attack-into-{turret.name}hb', self.hitTurret, extraArgs=[turret])
-            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret])
-            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret])
+            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret, "R"])
+            self.accept(f'parry-into-{turret.NP.name}attackL', self.parryTurret, extraArgs=[turret, "L"])
             for bullet in turret.bullets:
                 # print('bullet hb name!', bullet.cNP.name)
                 for n in range(self.lvl.geomcount):
@@ -366,15 +376,18 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         hitseq = Sequence(a, p, Wait(.1),b, r,e).start()
         if enemy.health<=0:
             self.enemydeath(enemy)
+            self.player.gainPlotArmor(.05)
         # shrink.start()
-    def parryTurret(self, turret,entry):
+    def parryTurret(self, turret, side, entry):
         print(f'successfuluy parried {turret.name}. it is stagger now')
+        turret.staggered(side)
     def hitTurret(self, turret, entry):
         # print('hit',turret.name)
         # turret.health -= .25
         # if turret.health<=0:
         #     # self.enemydeath(turret)
         #     turret.dieSeq()
+        self.hitsfx.play()
 
         if turret.isHit==True:
             print(turret.NP.name,'is already hit')
@@ -410,6 +423,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         hitseq = Sequence(a, p, Wait(.1),b, r,e).start()
         if turret.health<=0 and not turret.isDying:
             turret.dieSeq()
+            self.player.gainPlotArmor(.1)
 
     def bullethitwall(self,bullet, entry):
         # print(bullet.name, 'hits wall')
@@ -452,7 +466,7 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
                 print('im alrteady hit gd')
                 return
             self.player.takeHit()
-            enemy.atkNode.node().clearSolids()
+            # enemy.atkNode.node().clearSolids()
             enemy.hasHit=True 
             print(  enemy.name, 'hits players', name)
         # self.player.takeHit()
@@ -469,8 +483,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         # print(entry)
         # self.dummy2.atkNode.node().clearSolids()
         
-        if self.player.health<=0:
-            self.doExit()
+        # if self.player.health<=0:
+        #     self.doExit()
         #add hitstopping,for enemy, sfx, etc
         ####Nered to add poise check then see whether or not character gets stunned
        
@@ -566,10 +580,9 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
     def actionX(self):
         self.finisherCheck()
         # print('closest enemy: ', self.closest)
-        # finisher test
-        # if self.closest!=None:
-        #     self.finisher(self.closest)
-        # self.finisher(self.dummy) #need to access enemy model
+
+
+
             # return
         # self.finisher(self.dummy3)
         # return
@@ -599,7 +612,13 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         #AIR SL;ASH ATTACK HERE
     def actionA(self):
         print('actionA')
+
+
         if self.player.state =='OF':
+            if self.observeRange == True:
+                # if self.observing == False:
+                self.observePilotArmor()
+          
             self.player.doJump()
     def actionB(self):
         print('actionb')
@@ -642,6 +661,8 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
         self.character.stopFly()
     def switch2mech(self):
         self.player.state = 'mech'
+        # self.player.character.setPos(self.lvl.staticMech.getPos(render))
+        self.lvl.staticMech.detachNode()
         # HACK: add new viable turret positions
         self.numTurretPos = 5
         self.player.setUpMech()
@@ -820,7 +841,35 @@ class Game(DirectObject, KeyboardInput, Anims, GamepadInput, Level, Events):
 
     def update(self, task):
         """Updates the character and listens for joystick-activated events"""
+        if self.player.health<=0:
+            print('ur dead')
+            self.doExit()
+        def observe():
+            o = self.lvl. observePA.getPos(render)
+            e = self.lvl.enterPA. getZ(render)
+            dis = abs((self.player.character.movementParent.getPos(render) - o).length())
+            mechEvent = self.player.character.movementParent.getZ(render) -e
+            
 
+
+            if dis < 15:
+                
+                    if self.observing == False:
+                        self.observeRange = True
+                        self.text.setText('press x')
+            else:
+                self.observing = False
+                self.text.clearText()
+
+            if mechEvent <0:
+                if self.player.plotArmour== 1:
+                    self.switch2mech()
+                elif self.player.dead == False:
+                    print(' ur dead bozo')
+                    self.player.death()
+
+        if self.player.state == 'OF':
+            observe()
         #check for bullets hitting the arena
         # for entry in self.collqueue.entries:
         #     # print(entry.getFromNodePath().name)

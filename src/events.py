@@ -700,3 +700,19 @@ class Events:
             """event when player takes damage and doesnt have super armor"""
             return
             #if you dont have super armor,  end attack and staggert    # print('dodge')
+        def observePilotArmor(self):
+            """look at pilot armor"""
+            # if self.observing == False:
+            self.observing = True
+            # if card == 1:
+            self.text.setText('Experimental PILOT ARMOR')
+            if self.observing ==True:
+                    self.text.setText('Experimental PILOT ARMOR Unit \nPilots must withstrand a neural grafting procedure to fly the vehicle. \n The procedure has a .000003% Survival rate')
+
+            # elif card == 2:
+                # self.text.setText('Pilots must withstrand a neural grafting procedure to fly the vehicle. \n The procedure has a .000003% Survival rate')
+                # self.observe2 = True
+            # elif card == 3:
+                # self.text.clearText()
+                # self.observing = False
+        
