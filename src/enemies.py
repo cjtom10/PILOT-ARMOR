@@ -216,11 +216,11 @@ class Turret():
         self.anim = self.model.getCurrentAnim()
         self.frame = self.model.getCurrentFrame()
         
-        # if self.isStunned == True:
+        if self.isStunned == True:
         #     # if self.frame!=None:
         #     #     if self.frame > 55:
         #     #         self.isStunned = False
-        #     return
+            return
         if self.isSpawning == True:
             return
         for x in self.bullets:
