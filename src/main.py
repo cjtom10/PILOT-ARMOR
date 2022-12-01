@@ -4,7 +4,6 @@ from multiprocessing.connection import wait
 from pickle import NONE
 from turtle import left, right
 from gltf.converter import collections
-from numpy import True_
 from panda3d.core import *
 from panda3d.bullet import *
 import math

@@ -13,10 +13,6 @@ from math import sqrt, pow, sin, cos
 from math import pi as M_PI
 M_PI_2 = M_PI * 2
 
-from numpy import true_divide
-
-# from numpy import float256
-
 from keyboardinput import KeyboardInput
 import time
 
